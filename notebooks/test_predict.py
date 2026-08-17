@@ -1,26 +1,25 @@
 """
 ================================================================================
-STANDALONE INFERENCE & EXPLAINABILITY SANITY TEST SUITE (test_predict.py)
+DUAL-PLATFORM INFERENCE & EXPLAINABILITY SANITY TEST SUITE (test_predict.py)
 ================================================================================
 
 PLAIN ENGLISH SUMMARY:
-This validation script tests the standalone prediction and explainability engine 
-(`models.explain.predict`) against real and fake account samples from 
-`data/processed/twitter_master.csv`. It executes isolated single-account sanity checks 
-and a 15-row randomized batch stress test, verifying that risk scores, classification 
-labels (`REAL`, `SUSPICIOUS`, `FAKE`), and SHAP feature explanation reasons are generated 
-correctly without errors prior to REST API integration.
+This validation script tests the standalone prediction and SHAP explainability engine 
+(`models.explain.predict`) against real and fake account samples from BOTH Twitter 
+(`twitter_master.csv`) and Meta (`meta_master.csv`) processed datasets. It executes 
+isolated single-account sanity checks and 15-row randomized batch stress tests for both 
+platforms, verifying that risk scores, classification labels (`REAL`, `SUSPICIOUS`, `FAKE`), 
+and SHAP explanation reasons are generated cleanly prior to REST API integration.
 
 TECHNICAL SPECIFICATIONS & TEST ASSERTIONS:
-1. Isolated Case Validation:
-   - Evaluates obvious fake (`is_fake` == 1) and real (`is_fake` == 0) account rows.
-   - Asserts key presence: `classification`, `risk_score`, `reasons`.
+1. Dual-Platform Isolated Case Validation:
+   - Evaluates obvious fake (`is_fake` == 1) and real (`is_fake` == 0) accounts for Twitter and Meta.
+   - Asserts key presence: `platform`, `classification`, `risk_score`, `reasons`.
    - Asserts non-empty list structure for SHAP generated natural-language reason strings.
 
-2. 15-Row Batch Stress Test:
-   - Samples 15 random account rows from `twitter_master.csv` with a fixed seed (`random_state=42`).
+2. 15-Row Batch Stress Tests (Twitter & Meta):
+   - Samples 15 random account rows from both processed datasets with fixed seeds (`random_state=42`).
    - Evaluates standalone inference execution time and binary decision alignment (`risk_score > 50`).
-   - Validates model stability across diverse unseen feature distributions.
 """
 
 import os
@@ -33,17 +32,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models.explain import predict
 
-def run_sanity_check():
-    print("="*60)
-    print("HOUR 7 SANITY CHECK: STANDALONE PREDICTION ENGINE")
+def run_platform_test(data_path: str, platform_name: str):
+    print("\n" + "="*60)
+    print(f"SANITY CHECK & STRESS TEST: {platform_name.upper()} PREDICTION ENGINE")
     print("="*60)
 
-    data_path = "data/processed/twitter_master.csv"
     if not os.path.exists(data_path):
         print(f"CRITICAL ERROR: Data not found at {data_path}")
         return
 
-    # 1. Load data and sanitize (mirroring the training pipeline)
+    # 1. Load data and sanitize
     df = pd.read_csv(data_path)
     df = df.replace([np.inf, -np.inf], 0).fillna(0)
 
@@ -52,14 +50,14 @@ def run_sanity_check():
     real_case = df[df["is_fake"] == 0].iloc[0].to_dict()
 
     # 3. Test isolated cases
-    for case, name in [(fake_case, "OBVIOUS FAKE CASE"), (real_case, "OBVIOUS REAL CASE")]:
+    for case, name in [(fake_case, f"OBVIOUS FAKE CASE ({platform_name.upper()})"), (real_case, f"OBVIOUS REAL CASE ({platform_name.upper()})")]:
         actual = int(case['is_fake'])
-        # Strip the target and the string identifier
         features = {k: v for k, v in case.items() if k not in ["is_fake", "username"]}
         
-        result = predict(features)
+        result = predict(features, platform=platform_name)
         
         print(f"\n--- {name} ---")
+        print(f"Platform: {result.get('platform')}")
         print(f"Actual label: {actual} (1=Fake, 0=Real)")
         print(f"Predicted Classification: {result.get('classification')}")
         print(f"Risk Score: {result.get('risk_score')}")
@@ -73,19 +71,17 @@ def run_sanity_check():
 
     # 4. The 15-Row Stress Test
     print("\n" + "="*60)
-    print("15-ROW STRESS TEST")
+    print(f"15-ROW STRESS TEST ({platform_name.upper()})")
     print("="*60)
     
     correct = 0
-    samples = df.sample(15, random_state=42)
+    samples = df.sample(min(15, len(df)), random_state=42)
     
     for _, row in samples.iterrows():
         actual = int(row["is_fake"])
         features = {k: v for k, v in row.items() if k not in ["is_fake", "username"]}
         
-        pred = predict(features)
-        
-        # Map the risk score back to a binary outcome to check baseline accuracy
+        pred = predict(features, platform=platform_name)
         pred_binary = 1 if pred["risk_score"] > 50 else 0
         
         match = "✓" if pred_binary == actual else "✗"
@@ -93,14 +89,13 @@ def run_sanity_check():
         
         print(f"{match} actual={actual} pred_binary={pred_binary} (Class: {pred['classification']:<10}) score={pred['risk_score']}")
 
-    print(f"\n{correct}/15 correct")
-    
-    if correct <= 7:
-        print("WARNING: Accuracy is worse than random guessing. Your model or feature alignment is fundamentally broken.")
-    elif correct < 12:
-        print("NOTICE: Accuracy is acceptable, but thresholding may require fine-tuning.")
-    else:
-        print("SUCCESS: Standalone prediction engine is robust. You are cleared for Phase 3 (FastAPI).")
+    print(f"\n{correct}/{len(samples)} correct")
+    assert correct >= (0.70 * len(samples)), f"Accuracy fell below threshold for {platform_name}."
+    print(f"SUCCESS: {platform_name.upper()} standalone prediction engine is robust.")
+
+def main():
+    run_platform_test("data/processed/twitter_master.csv", "twitter")
+    run_platform_test("data/processed/meta_master.csv", "meta")
 
 if __name__ == "__main__":
-    run_sanity_check()
+    main()

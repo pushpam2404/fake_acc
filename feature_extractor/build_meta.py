@@ -68,7 +68,7 @@ META_MAPPING = {
 META_CORE_FEATURES = [
     'followers', 'following', 'post_count', 
     'has_profile_pic', 'bio_length', 'is_fake',
-    'follower_following_ratio'
+    'follower_following_ratio', 'reputation_score'
 ]
 # ---------------------------------------------------------
 # 2. STANDARDIZATION LOGIC (Identical to Twitter)
@@ -122,9 +122,11 @@ def engineer_meta_features(df: pd.DataFrame) -> pd.DataFrame:
     for col in ['followers', 'following', 'post_count']:
         if col not in df.columns:
             df[col] = 0
+        else:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
     for col in META_CORE_FEATURES:
-        if col in df.columns and col != 'follower_following_ratio':
+        if col in df.columns and col not in ['follower_following_ratio', 'reputation_score']:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
 
     # ---------------------------------------------------------
@@ -132,7 +134,11 @@ def engineer_meta_features(df: pd.DataFrame) -> pd.DataFrame:
     # ---------------------------------------------------------
     # 1. The Ratio: Safe division
     df['follower_following_ratio'] = df['followers'] / (df['following'] + 1)
-    df['follower_following_ratio'] = df['follower_following_ratio'].replace([np.inf, -np.inf], 0)
+    df['follower_following_ratio'] = df['follower_following_ratio'].replace([np.inf, -np.inf], 0).fillna(0)
+
+    # 2. Reputation Score: Bounded strictly in [0, 1]
+    df['reputation_score'] = df['followers'] / (df['followers'] + df['following'] + 1)
+    df['reputation_score'] = df['reputation_score'].replace([np.inf, -np.inf], 0).fillna(0)
 
     return df
 

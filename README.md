@@ -1,4 +1,4 @@
-# 🛡️ Fake Account & Bot Detection Engine
+# 🛡️ Cross-Platform Fake Account & Bot Detection Engine
 
 A machine learning system for detecting fake, bot, and automated accounts across social media platforms (**Twitter/X** and **Meta/Instagram/Facebook**).
 
@@ -6,14 +6,14 @@ A machine learning system for detecting fake, bot, and automated accounts across
 
 ## 📌 Project Overview
 
-This repository provides an end-to-end pipeline to standardize raw multi-source social media datasets, engineer behavioral and structural features, train high-performance ML models (Random Forest, XGBoost, MLP Neural Networks), and generate human-readable decision explanations using SHAP feature attribution.
+This repository provides an end-to-end pipeline to standardize raw multi-source social media datasets, engineer behavioral and structural features, train high-performance ML models (Random Forest, XGBoost, MLP Neural Networks) for both **Twitter** and **Meta/Instagram**, and generate human-readable decision explanations using SHAP feature attribution.
 
 ### Key Milestones Achieved
-- **Multi-Source Dataset Standardization**: Ingested and unified raw datasets (Cresci 2017, Genuine/Fake users, Nidhekshaa, Satish, IMFAD) into cleaned master matrices.
-- **Toxic Dataset Identification & Purge**: Filtered out corrupted/incomplete datasets (`bot_detection_data.csv`) that lacked structural metadata (e.g., missing `following` count).
+- **Dual-Platform Pipeline Architecture**: Standardized raw datasets across Twitter (Cresci, Satish, Genuine/Fake) and Meta platforms (LIMFADD, Instagram, Facebook profiles).
+- **Toxic Dataset Identification & Purge**: Filtered out incomplete/corrupted datasets (`bot_detection_data.csv`) lacking structural metadata.
 - **High-Signal Feature Engineering**: Engineered bounded reputation scores, username entropy ratios, activity density, account age, and behavioral ratios.
-- **Model Benchmark Jump**: Boosted Twitter detection **F1-Score from ~63% to 85.72%** and overall accuracy to **90.19%**.
-- **Explainable AI Integration**: Built standalone inference and SHAP explainability engine ([`models/explain.py`](file:///Users/pushpam/Desktop/fake-account-detection/models/explain.py)) returning risk scores (0-100%), 3-class categories (`REAL`, `SUSPICIOUS`, `FAKE`), and English reason translations.
+- **Benchmark Performance**: Achieved **90.19% Accuracy (85.72% F1-Score)** on Twitter and **97.02% Accuracy (97.29% F1-Score)** on Meta/Instagram.
+- **Unified SHAP Explainability Engine**: Built dual-platform inference engine ([`models/explain.py`](file:///Users/pushpam/Desktop/fake-account-detection/models/explain.py)) returning risk scores (0-100%), 3-class categories (`REAL`, `SUSPICIOUS`, `FAKE`), and English reason translations.
 
 ---
 
@@ -22,60 +22,58 @@ This repository provides an end-to-end pipeline to standardize raw multi-source 
 ```text
 fake-account-detection/
 ├── data/
-│   ├── raw/                # Original raw CSVs (Cresci, Nidhekshaa, Satish, etc.)
+│   ├── raw/                # Original raw CSVs (Cresci, Nidhekshaa, Satish, IMFAD, etc.)
 │   └── processed/          # Cleaned master matrices (twitter_master.csv, meta_master.csv)
 ├── feature_extractor/
 │   ├── build_twitter.py    # Twitter pipeline: label mapping, feature engineering, sanitization
 │   └── build_meta.py       # Meta/IG pipeline: profile pic, bio length, follower ratios
 ├── models/
 │   ├── experiments/
-│   │   ├── compare_twitter_models.py  # Gladiator Arena benchmark script
-│   │   └── tune_xgboost.py            # Hyperparameter search using RandomizedSearchCV
-│   ├── saved/              # Trained models (*.pkl) & scalers (*_scaler.pkl)
-│   ├── explain.py          # Standalone inference & SHAP explainability translation engine
-│   └── results.md          # Technical evaluation log & performance post-mortem
+│   │   ├── compare_twitter_models.py  # Gladiator Arena benchmark script (Twitter)
+│   │   ├── compare_meta_models.py     # Gladiator Arena benchmark script (Meta/IG)
+│   │   ├── tune_xgboost.py            # Hyperparameter search for Twitter XGBoost
+│   │   └── tune_xgboost_meta.py       # Hyperparameter search for Meta XGBoost
+│   ├── saved/              # Trained Twitter & Meta models (*.pkl) & scalers (*_scaler.pkl)
+│   ├── explain.py          # Unified dual-platform inference & SHAP explainability engine
+│   └── results.md          # Combined Twitter & Meta benchmark leaderboards
 ├── notebooks/
 │   ├── inspect_raw.py      # Exploratory raw dataset diagnostic inspector
-│   └── test_predict.py     # Inference & explainability stress test suite
+│   └── test_predict.py     # Inference & explainability stress test suite (Twitter & Meta)
 ├── .gitignore              # Repository git exclusion rules
 └── README.md               # Project documentation
 ```
 
 ---
 
-## ⚙️ Feature Engineering Highlights
+## ⚙️ Feature Engineering Schemas
 
-The feature extraction engines ([`feature_extractor/build_twitter.py`](file:///Users/pushpam/Desktop/fake-account-detection/feature_extractor/build_twitter.py) and [`feature_extractor/build_meta.py`](file:///Users/pushpam/Desktop/fake-account-detection/feature_extractor/build_meta.py)) process raw account data into the following schema:
+The feature extraction engines process raw account data into platform-specific schemas:
 
-| Feature Name | Type | Description |
-| :--- | :--- | :--- |
-| `followers` | Numeric | Count of account followers |
-| `following` | Numeric | Count of accounts followed |
-| `post_count` | Numeric | Total tweets/posts published |
-| `verified` | Binary | Account verification status (`1`=Verified, `0`=Unverified) |
-| `description_length` | Numeric | Character length of profile bio/description |
-| `account_age_days` | Numeric | Account age calculated from creation timestamp |
-| `follower_following_ratio` | Ratio | `followers / (following + 1)` (Zero-division safe) |
-| `reputation_score` | Ratio | `followers / (followers + following + 1)` bounded in `[0, 1]` |
-| `username_length` | Numeric | Character length of screen name / username |
-| `digits_in_username` | Numeric | Count of numerical digits in username |
-| `digit_ratio_username` | Ratio | `digits_in_username / (username_length + 1e-5)` (Detects hash-like bot handles) |
-| `has_url` | Binary | Profile contains external link (`1`=Yes, `0`=No) |
-| `posts_per_day` | Ratio | Activity density: `post_count / (account_age_days + 1)` |
-| `is_fake` | Target | Ground truth label (`0`=Real, `1`=Fake/Bot) |
+### Twitter Schema ([`feature_extractor/build_twitter.py`](file:///Users/pushpam/Desktop/fake-account-detection/feature_extractor/build_twitter.py))
+`followers`, `following`, `post_count`, `verified`, `description_length`, `account_age_days`, `follower_following_ratio`, `reputation_score`, `username_length`, `digits_in_username`, `digit_ratio_username`, `has_url`, `posts_per_day`.
+
+### Meta/Instagram Schema ([`feature_extractor/build_meta.py`](file:///Users/pushpam/Desktop/fake-account-detection/feature_extractor/build_meta.py))
+`followers`, `following`, `post_count`, `has_profile_pic`, `bio_length`, `follower_following_ratio`, `reputation_score`.
 
 ---
 
-## 📊 Model Gladiator Arena Benchmarks
+## 📊 Benchmark Leaderboards
 
-Evaluated on unseen test split (**12,984 Twitter accounts** from a clean master dataset of **64,919 unique accounts**):
-
+### 🐦 Twitter Platform (64,919 Accounts)
 | Rank | Model | Accuracy | Precision (Fake) | Recall (Fake) | F1-Score | Train Time (s) |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
 | 🥇 | **Random Forest (Winner)** | **90.19%** | **88.35%** | **83.24%** | **85.72%** | 0.87s |
 | 🥈 | **XGBoost Classifier** | **90.03%** | **87.65%** | **83.59%** | **85.57%** | 0.17s |
 | 🥉 | **Neural Network (MLP)** | 87.37% | 80.96% | 84.07% | 82.49% | 21.97s |
 | 4 | Logistic Regression | 65.04% | 51.24% | 24.77% | 33.40% | 0.02s |
+
+### 📸 Meta / Instagram Platform (36,383 Accounts)
+| Rank | Model | Accuracy | Precision (Fake) | Recall (Fake) | F1-Score | Train Time (s) |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
+| 🥇 | **Random Forest (Winner)** | **97.02%** | **97.52%** | **97.06%** | **97.29%** | 0.30s |
+| 🥈 | **XGBoost Classifier** | **96.83%** | **97.18%** | **97.06%** | **97.12%** | 0.14s |
+| 🥉 | **Neural Network (MLP)** | 96.21% | 97.48% | 95.58% | 96.52% | 4.12s |
+| 4 | Logistic Regression | 84.20% | 86.25% | 84.83% | 85.53% | 0.01s |
 
 ---
 
@@ -89,27 +87,30 @@ pip install pandas numpy scikit-learn xgboost joblib shap
 ```
 
 ### 2. Build Processed Master Datasets
-Run the feature extraction pipelines to convert raw datasets in `data/raw/` into processed master matrices:
 ```bash
 python feature_extractor/build_twitter.py
 python feature_extractor/build_meta.py
 ```
 
-### 3. Train & Compare Models
-Run the Model Gladiator Arena to evaluate baseline algorithms and export the winning model:
+### 3. Train & Benchmark Models
 ```bash
+# Twitter Model Gladiator Arena
 python models/experiments/compare_twitter_models.py
-```
-Output models and scalers are saved to `models/saved/twitter_best_model.pkl` and `models/saved/twitter_scaler.pkl`.
 
-### 4. Hyperparameter Tuning (XGBoost)
-Run randomized search cross-validation to tune decision tree depths, learning rates, and imbalance weights (`scale_pos_weight`):
+# Meta/Instagram Model Gladiator Arena
+python models/experiments/compare_meta_models.py
+```
+
+### 4. Hyperparameter Tuning
 ```bash
+# Tune Twitter XGBoost
 python models/experiments/tune_xgboost.py
+
+# Tune Meta XGBoost
+python models/experiments/tune_xgboost_meta.py
 ```
 
-### 5. Run Inference & Explainability Validation
-Run the standalone prediction engine stress test to verify SHAP explanation translation and 3-class classifications:
+### 5. Run Dual-Platform Inference & Explainability Test Suite
 ```bash
 python notebooks/test_predict.py
 ```

@@ -1,10 +1,25 @@
 """
-Run once after downloading all datasets:
-    python notebooks/inspect_raw.py
+================================================================================
+RAW DATASET EXPLORATION & DIAGNOSTIC INSPECTOR (inspect_raw.py)
+================================================================================
 
-Walks data/raw/, finds every .csv, and prints shape + columns + dtypes
-+ a guess at the label column. Use this output to fill in the column
-mappings in feature_extractor/build.py — don't guess column names blind.
+PLAIN ENGLISH SUMMARY:
+This utility script recursively scans the `data/raw/` directory to inspect every 
+downloaded dataset CSV file. It outputs dataset shape, column names, data types, 
+and automatically guesses which column represents the ground truth classification target 
+(`is_fake` / `bot` label). This diagnostic output prevents developer blind guessing when 
+configuring column mapping dictionaries in the feature extraction pipelines.
+
+TECHNICAL SPECIFICATIONS & DOMAIN LOGIC:
+1. Recursive Traversal & Tokenizing Safety:
+   - Traverses nested subdirectories within `data/raw/` using `glob.glob`.
+   - Reads 5,000-row samples per CSV using `pd.read_csv(nrows=5000, on_bad_lines='warn')` 
+     to evaluate dataset contents rapidly without memory overflow or parsing crashes.
+
+2. Target Header Deduction & Label Distribution:
+   - Uses fuzzy string substring matching (`LABEL_HINTS`) to locate ground truth columns.
+   - Evaluates label value distributions (`value_counts()`) to detect class balance.
+   - Ignores known corrupt, non-structural, or redundant datasets (`satish/fake_social_media.csv`).
 """
 
 import glob

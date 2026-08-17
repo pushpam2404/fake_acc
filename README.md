@@ -6,13 +6,14 @@ A machine learning system for detecting fake, bot, and automated accounts across
 
 ## 📌 Project Overview
 
-This repository provides an end-to-end pipeline to standardize raw multi-source social media datasets, engineer behavioral and structural features, and train high-performance ML models (Random Forest, XGBoost, MLP Neural Networks) to classify accounts as **Real (0)** or **Fake/Bot (1)**.
+This repository provides an end-to-end pipeline to standardize raw multi-source social media datasets, engineer behavioral and structural features, train high-performance ML models (Random Forest, XGBoost, MLP Neural Networks), and generate human-readable decision explanations using SHAP feature attribution.
 
 ### Key Milestones Achieved
 - **Multi-Source Dataset Standardization**: Ingested and unified raw datasets (Cresci 2017, Genuine/Fake users, Nidhekshaa, Satish, IMFAD) into cleaned master matrices.
 - **Toxic Dataset Identification & Purge**: Filtered out corrupted/incomplete datasets (`bot_detection_data.csv`) that lacked structural metadata (e.g., missing `following` count).
 - **High-Signal Feature Engineering**: Engineered bounded reputation scores, username entropy ratios, activity density, account age, and behavioral ratios.
 - **Model Benchmark Jump**: Boosted Twitter detection **F1-Score from ~63% to 85.72%** and overall accuracy to **90.19%**.
+- **Explainable AI Integration**: Built standalone inference and SHAP explainability engine ([`models/explain.py`](file:///Users/pushpam/Desktop/fake-account-detection/models/explain.py)) returning risk scores (0-100%), 3-class categories (`REAL`, `SUSPICIOUS`, `FAKE`), and English reason translations.
 
 ---
 
@@ -30,9 +31,12 @@ fake-account-detection/
 │   ├── experiments/
 │   │   ├── compare_twitter_models.py  # Gladiator Arena benchmark script
 │   │   └── tune_xgboost.py            # Hyperparameter search using RandomizedSearchCV
-│   └── saved/              # Trained models (*.pkl) & scalers (*_scaler.pkl)
+│   ├── saved/              # Trained models (*.pkl) & scalers (*_scaler.pkl)
+│   ├── explain.py          # Standalone inference & SHAP explainability translation engine
+│   └── results.md          # Technical evaluation log & performance post-mortem
 ├── notebooks/
-│   └── inspect_raw.py      # Exploratory dataset inspection scripts
+│   ├── inspect_raw.py      # Exploratory raw dataset diagnostic inspector
+│   └── test_predict.py     # Inference & explainability stress test suite
 ├── .gitignore              # Repository git exclusion rules
 └── README.md               # Project documentation
 ```
@@ -81,7 +85,7 @@ Evaluated on unseen test split (**12,984 Twitter accounts** from a clean master 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install pandas numpy scikit-learn xgboost joblib
+pip install pandas numpy scikit-learn xgboost joblib shap
 ```
 
 ### 2. Build Processed Master Datasets
@@ -96,10 +100,16 @@ Run the Model Gladiator Arena to evaluate baseline algorithms and export the win
 ```bash
 python models/experiments/compare_twitter_models.py
 ```
-Output models and scalers are automatically saved to `models/saved/twitter_best_model.pkl` and `models/saved/twitter_scaler.pkl`.
+Output models and scalers are saved to `models/saved/twitter_best_model.pkl` and `models/saved/twitter_scaler.pkl`.
 
 ### 4. Hyperparameter Tuning (XGBoost)
 Run randomized search cross-validation to tune decision tree depths, learning rates, and imbalance weights (`scale_pos_weight`):
 ```bash
 python models/experiments/tune_xgboost.py
+```
+
+### 5. Run Inference & Explainability Validation
+Run the standalone prediction engine stress test to verify SHAP explanation translation and 3-class classifications:
+```bash
+python notebooks/test_predict.py
 ```

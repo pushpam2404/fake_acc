@@ -1,3 +1,42 @@
+"""
+================================================================================
+TWITTER FEATURE EXTRACTION & DATA PIPELINE ENGINE (build_twitter.py)
+================================================================================
+
+PLAIN ENGLISH SUMMARY:
+This script scans through all raw dataset CSV files stored in the `data/raw/` 
+directory, cleans up inconsistent column headers and missing labels, and 
+transforms heterogeneous Twitter datasets into a standardized, tabular matrix 
+ready for machine learning models. It filters out incompatible/corrupted 
+datasets and extracts high-signal behavioral features (like follower-following 
+ratios, username digit entropy, and activity density). The final output is saved 
+as a deduplicated dataset at `data/processed/twitter_master.csv`.
+
+TECHNICAL SPECIFICATIONS & DOMAIN LOGIC:
+1. Target Label Standardization:
+   - Identifies ground truth classification columns across multi-source datasets.
+   - Maps multi-class categorical targets ('bot', 'fake', 'spam', 'human', 'real') 
+     to binary numerical target labels: `1` for Fake/Bot and `0` for Real.
+   - Uses dynamic filename heuristic keyword matching when explicit label columns 
+     are absent in dataset files.
+
+2. Schema Alignment & Normalization:
+   - Remaps diverse schema column names (e.g., 'screen_name' -> 'username', 
+     'statuses_count' -> 'post_count', 'friends_count' -> 'following') to a 
+     unified canonical feature schema.
+   - Filters out toxic datasets (e.g., `bot_detection_data.csv`) that lack 
+     essential structural metadata (such as `following` count).
+
+3. Feature Engineering Math:
+   - Follower-Following Ratio: `followers / (following + 1)` (smoothed against division by zero).
+   - Bounded Reputation Score: `followers / (followers + following + 1)` bounded in `[0, 1]`.
+   - Username Entropy & Character Analysis: Counts string length, digit count, 
+     and digit ratio (`digits / (length + 1e-5)`), capturing randomly generated bot hashes.
+   - Activity Density: `post_count / (account_age_days + 1)` representing posts per day.
+   - Temporal & Boolean Flags: Extracts `description_length`, `account_age_days` 
+     from UTC timestamps, `verified` status, and URL presence flags.
+"""
+
 import os
 import glob
 import pandas as pd

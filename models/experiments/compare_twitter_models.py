@@ -1,3 +1,38 @@
+"""
+================================================================================
+MODEL GLADIATOR ARENA & EVALUATION BENCHMARK (compare_twitter_models.py)
+================================================================================
+
+PLAIN ENGLISH SUMMARY:
+This script acts as a competitive benchmark suite ("Gladiator Arena") that loads 
+the processed Twitter dataset, trains four distinct machine learning model architectures 
+(Logistic Regression, Random Forest, XGBoost, and MLP Neural Network) on an 80/20 
+train-test split, evaluates their performance across standard metrics (Accuracy, 
+Precision, Recall, F1-Score), and automatically serializes the winning model and 
+feature scaler to `models/saved/`.
+
+TECHNICAL SPECIFICATIONS & DOMAIN LOGIC:
+1. Feature Isolation & Data Sanitization:
+   - Drops string identifiers (`username`) and isolates target ground truth (`is_fake`).
+   - Implements a sanitization block replacing infinite values (`inf`, `-inf`) with `NaN` 
+     and imputing missing values with `0`.
+
+2. Data Splitting & Feature Scaling:
+   - Applies stratified 80/20 train-test splitting (`train_test_split(stratify=y)`) to 
+     preserve positive class distribution between training and test subsets.
+   - Fits a `StandardScaler` on training features only to prevent data leakage from test data.
+   - Serializes the fitted scaler to `models/saved/twitter_scaler.pkl`.
+
+3. Model Ecosystem & Evaluation Metrics:
+   - Baseline Linear: `LogisticRegression(max_iter=1000)`
+   - Ensemble Trees: `RandomForestClassifier(n_estimators=100, n_jobs=-1)`
+   - Gradient Boosting: `XGBClassifier(eval_metric='logloss', n_jobs=-1)`
+   - Deep Learning: `MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=500)`
+   - Metrics Evaluated: Accuracy, Precision (Fake class), Recall (Fake class), F1-Score.
+   - Selection Criterion: Automatically selects the top model based on F1-Score (to balance 
+     catching fake accounts without false bans) and saves it to `models/saved/twitter_best_model.pkl`.
+"""
+
 import os
 import time
 import pandas as pd

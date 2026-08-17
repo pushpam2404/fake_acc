@@ -1,3 +1,38 @@
+"""
+================================================================================
+META / INSTAGRAM FEATURE EXTRACTION PIPELINE ENGINE (build_meta.py)
+================================================================================
+
+PLAIN ENGLISH SUMMARY:
+This script processes raw CSV files containing Instagram and Facebook account 
+metadata from `data/raw/`. It standardizes inconsistent column headers across 
+different Meta platform datasets, extracts structural profile features (like 
+profile picture flags, bio lengths, post counts, and follower-following ratios), 
+and compiles them into a clean, deduplicated matrix saved at 
+`data/processed/meta_master.csv`.
+
+TECHNICAL SPECIFICATIONS & DOMAIN LOGIC:
+1. Target Label Standardization:
+   - Maps multi-class strings ('real', 'spam', 'scam', 'bot') to binary target 
+     `is_fake` (`1`=Fake, `0`=Real).
+   - Employs filename keyword matching ('fake', 'spam', 'genuine', 'real') when 
+     explicit target headers are missing in raw CSV files.
+
+2. Meta/Instagram Schema Mapping:
+   - Remaps platform-specific headers ('#followers', '#follows', '#posts', 
+     'description length', 'profile pic') into unified schema fields: 
+     `followers`, `following`, `post_count`, `bio_length`, `has_profile_pic`.
+
+3. Feature Engineering & Type Sanitization:
+   - Profile Pic Indicator: Maps boolean/string flags ('Y', 'N', 'yes', 'no', 
+     '1', '0', 'true', 'false') cleanly to `1` or `0`.
+   - Bio Length: Measures string character length of profile bio text.
+   - Follower-Following Ratio: Computes `followers / (following + 1)` and caps 
+     infinite/NaN values to `0`.
+   - Routing Logic: Isolates Meta/IG schemas from Twitter schemas by checking for 
+     Meta specific column signatures (`bio_length`, `has_profile_pic`, `friend_count`).
+"""
+
 import os
 import glob
 import pandas as pd

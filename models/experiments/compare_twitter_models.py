@@ -44,7 +44,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, VotingClassifier
 from sklearn.neural_network import MLPClassifier
 from xgboost import XGBClassifier
 
@@ -88,10 +88,21 @@ def run_model_arena():
     joblib.dump(scaler, scaler_path)
 
     # 4. Define the Combatants
+    rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+    xgb = XGBClassifier(eval_metric='logloss', random_state=42, n_jobs=-1)
+    et = ExtraTreesClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+    ensemble = VotingClassifier(
+        estimators=[('rf', rf), ('xgb', xgb), ('et', et)],
+        voting='soft',
+        n_jobs=-1
+    )
+
     models = {
         "Logistic Regression (Baseline)": LogisticRegression(max_iter=1000, random_state=42),
-        "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
-        "XGBoost": XGBClassifier(eval_metric='logloss', random_state=42, n_jobs=-1),
+        "Random Forest": rf,
+        "XGBoost": xgb,
+        "Extra Trees": et,
+        "Soft-Voting Ensemble (RF+XGB+ET)": ensemble,
         "Neural Network (MLP)": MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=500, random_state=42)
     }
 

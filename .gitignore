@@ -71,3 +71,6 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# Exclude heavy >100MB Voting Ensemble binaries (tracked via XGBoost tuned models)
+models/saved/*_best_model.pkl

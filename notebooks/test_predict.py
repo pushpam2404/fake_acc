@@ -5,21 +5,11 @@ DUAL-PLATFORM INFERENCE & EXPLAINABILITY SANITY TEST SUITE (test_predict.py)
 
 PLAIN ENGLISH SUMMARY:
 This validation script tests the standalone prediction and SHAP explainability engine 
-(`models.explain.predict`) against real and fake account samples from BOTH Twitter 
+(`models.predict.predict`) against real and fake account samples from BOTH Twitter 
 (`twitter_master.csv`) and Meta (`meta_master.csv`) processed datasets. It executes 
 isolated single-account sanity checks and 15-row randomized batch stress tests for both 
 platforms, verifying that risk scores, classification labels (`REAL`, `SUSPICIOUS`, `FAKE`), 
 and SHAP explanation reasons are generated cleanly prior to REST API integration.
-
-TECHNICAL SPECIFICATIONS & TEST ASSERTIONS:
-1. Dual-Platform Isolated Case Validation:
-   - Evaluates obvious fake (`is_fake` == 1) and real (`is_fake` == 0) accounts for Twitter and Meta.
-   - Asserts key presence: `platform`, `classification`, `risk_score`, `reasons`.
-   - Asserts non-empty list structure for SHAP generated natural-language reason strings.
-
-2. 15-Row Batch Stress Tests (Twitter & Meta):
-   - Samples 15 random account rows from both processed datasets with fixed seeds (`random_state=42`).
-   - Evaluates standalone inference execution time and binary decision alignment (`risk_score > 50`).
 """
 
 import os
@@ -30,7 +20,7 @@ import numpy as np
 # Append root directory to path to allow importing from the models directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from models.explain import predict
+from models.predict import predict
 
 def run_platform_test(data_path: str, platform_name: str):
     print("\n" + "="*60)
@@ -63,7 +53,6 @@ def run_platform_test(data_path: str, platform_name: str):
         print(f"Risk Score: {result.get('risk_score')}")
         print(f"Reasons: {result.get('reasons')}")
 
-        # Hard fail assertions
         assert 'classification' in result, "Missing 'classification' key in output."
         assert 'risk_score' in result, "Missing 'risk_score' key in output."
         assert 'reasons' in result, "Missing 'reasons' key in output."

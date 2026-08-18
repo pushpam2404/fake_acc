@@ -1,0 +1,15 @@
+{
+  "followers": 12,
+  "following": 4500,
+  "post_count": 5000,
+  "verified": 0,
+  "description_length": 0,
+  "account_age_days": 2,
+  "follower_following_ratio": 0.002,
+  "reputation_score": 0.002,
+  "username_length": 15,
+  "digits_in_username": 6,
+  "digit_ratio_username": 0.4,
+  "has_url": 1,
+  "posts_per_day": 2500.0
+}

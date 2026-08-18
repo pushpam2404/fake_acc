@@ -61,10 +61,9 @@ TWITTER_MAPPING = {
 
 TWITTER_CORE_FEATURES = [
     'username', 'followers', 'following', 'post_count', 
-    'log_followers', 'log_following', 'log_post_count',
     'verified', 'is_fake', 'description_length', 'account_age_days',
-    'follower_following_ratio', 'following_followers_ratio', 'reputation_score',
-    'username_length', 'digits_in_username', 'digit_ratio_username', 'consonant_ratio_username',
+    'follower_following_ratio', 'reputation_score',
+    'username_length', 'digits_in_username', 'digit_ratio_username',
     'has_url', 'posts_per_day'
 ]
 
@@ -111,23 +110,16 @@ def engineer_twitter_features(df: pd.DataFrame) -> pd.DataFrame:
     df['verified'] = df['verified'].astype(bool).astype(int) if 'verified' in df.columns else 0
     df['has_url'] = df['url'].notna().astype(int) if 'url' in df.columns else 0
 
-    # 4. Safe Numeric Handling & Log Transformations
+    # 4. Safe Numeric Handling
     for col in ['followers', 'following', 'post_count']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         else:
             df[col] = 0
 
-    df['log_followers'] = np.log1p(np.maximum(0, df['followers']))
-    df['log_following'] = np.log1p(np.maximum(0, df['following']))
-    df['log_post_count'] = np.log1p(np.maximum(0, df['post_count']))
-
     # 5. Behavioral Ratios
     df['follower_following_ratio'] = df['followers'] / (df['following'] + 1)
     df['follower_following_ratio'] = df['follower_following_ratio'].replace([np.inf, -np.inf], 0).fillna(0)
-
-    df['following_followers_ratio'] = df['following'] / (df['followers'] + 1)
-    df['following_followers_ratio'] = df['following_followers_ratio'].replace([np.inf, -np.inf], 0).fillna(0)
 
     df['reputation_score'] = df['followers'] / (df['followers'] + df['following'] + 1)
     df['reputation_score'] = df['reputation_score'].replace([np.inf, -np.inf], 0).fillna(0)
@@ -135,19 +127,16 @@ def engineer_twitter_features(df: pd.DataFrame) -> pd.DataFrame:
     df['posts_per_day'] = df['post_count'] / (df['account_age_days'].replace(-1, 0) + 1)
     df['posts_per_day'] = df['posts_per_day'].replace([np.inf, -np.inf], 0).fillna(0)
 
-    # 6. Username Entropy & Consonant Analysis
+    # 6. Username Entropy
     if 'username' in df.columns:
         uname_str = df['username'].fillna('').astype(str)
         df['username_length'] = uname_str.str.len()
         df['digits_in_username'] = uname_str.str.count(r'\d').fillna(0).astype(int)
         df['digit_ratio_username'] = (df['digits_in_username'] / (df['username_length'] + 1e-5)).fillna(0)
-        consonants = uname_str.str.count(r'[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]').fillna(0)
-        df['consonant_ratio_username'] = (consonants / (df['username_length'] + 1e-5)).fillna(0)
     else:
         df['username_length'] = 0
         df['digits_in_username'] = 0
         df['digit_ratio_username'] = 0.0
-        df['consonant_ratio_username'] = 0.0
 
     return df
 

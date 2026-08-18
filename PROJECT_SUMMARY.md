@@ -6,14 +6,15 @@ A comprehensive, production-ready machine learning framework for detecting fake,
 
 ### The Foundation: What I Have Built (Progress)
 
-I have successfully transitioned from wrestling with fragmented, corrupted raw data to possessing a mathematically sound, production-ready machine learning inference engine. I didn't take the sloppy route of blindly throwing data at an algorithm; I built a professional-grade ETL (Extract, Transform, Load) pipeline prioritizing backend efficiency over messy mathematical imputation.
+I have successfully transitioned from wrestling with fragmented, corrupted raw data to possessing a mathematically sound, production-ready machine learning inference engine and FastAPI REST API backend.
 
 * **Reconnaissance & Labeling (`inspect_raw.py`):** I built a scanner that dynamically intercepts missing target variables by parsing file names (extracting `1` for "fake" and `0` for "genuine"). This single script saved over 12,000 rows of high-quality data from the void.
-* **Bifurcated ETL Pipelines (`build_twitter.py`, `build_meta.py`):** I abandoned the "Universal Schema" trap. By splitting the architecture into domain-isolated pipelines that respect the structural differences between Twitter (metadata-heavy) and Meta (visual/bio-heavy), I guaranteed dense, high-signal matrices without a sea of Null values.
-* **Derived Feature Engineering:** Instead of relying on raw, noisy metrics, I engineered behavioral derivations—like `follower_following_ratio`, `posts_per_day`, `digit_ratio_username`, `consonant_ratio_username`, and `profile_pic_bio_score`. Just like calculating a car's power-to-weight ratio tells you more than just its weight, these ratios act as the actual mathematical tripwires for catching bots.
+* **Bifurcated ETL Pipelines (`build_twitter.py`, `build_meta.py`):** I abandoned the "Universal Schema" trap. By splitting the architecture into domain-isolated pipelines that respect the structural differences between Twitter (13 features) and Meta (7 features), I guaranteed dense, high-signal matrices without a sea of Null values.
+* **Derived Feature Engineering:** Instead of relying on raw, noisy metrics, I engineered behavioral derivations—like `follower_following_ratio`, `posts_per_day`, `reputation_score`, and `digit_ratio_username`. Just like calculating a car's power-to-weight ratio tells you more than just its weight, these ratios act as the actual mathematical tripwires for catching bots.
 * **Model Gladiator Arena (`compare_twitter_models.py`, `compare_meta_models.py`):** I set up a rigorous testing ground to prove the math. I demonstrated that tree-based ensembles (Random Forest/XGBoost/Extra Trees) completely annihilate standard linear models and neural networks on this specific tabular data.
 * **Hyperparameter Optimization (`tune_xgboost_twitter.py`, `tune_xgboost_meta.py`):** I maxed out my M4 Mac's multi-core processing to run randomized cross-validation searches. This pushed the XGBoost model to **90.04% accuracy / 85.63% F1-Score on Twitter** and **96.87% accuracy / 97.15% F1-Score on Meta**, mapping highly complex decision boundaries.
-* **The Explainability Engine (`explain.py` & `test_predict.py`):** I integrated SHAP (SHapley Additive exPlanations—a game-theory approach to explain machine learning predictions) to reverse-engineer the model's brain. It now outputs human-readable English reasons for *why* an account is fake, backed by an isolated 30-row stress test proving robust performance outside the training environment.
+* **The Prediction & Explainability Engine (`models/predict.py` & `test_predict.py`):** I integrated SHAP (SHapley Additive exPlanations) into a lean, self-explanatory inference module (`models/predict.py`). It outputs human-readable English reasons for *why* an account is fake, backed by an isolated 30-row stress test proving robust performance outside the training environment.
+* **FastAPI Backend REST API (`backend/main.py` & `backend/schemas.py`):** I built a high-performance, asynchronous FastAPI backend exposing HTTP endpoints (`POST /analyze`, `POST /analyze/batch`, `GET /health`) with Pydantic contract validation and CORS middleware pre-configured for React frontend integration.
 
 ---
 
@@ -45,6 +46,10 @@ The path was littered with data engineering landmines that would have derailed a
   * *The Threat:* Combining multiple heavy tree models into a `VotingClassifier` ensemble inflated the binary serialized pickle file (`twitter_best_model.pkl`) to 497.28 MB and `meta_best_model.pkl` to 124.86 MB. GitHub rejected the `git push` command due to its hard 100 MB per-file limit.
   * *The Fix:* Decoupled the repository binary storage to rely on compact, single-model **Tuned XGBoost artifacts (`twitter_xgboost_tuned.pkl` and `meta_xgboost_tuned.pkl`)**, which are only ~5-15 MB in size, lightning fast (0.14s inference latency), and fully compatible with native SHAP `TreeExplainer` feature attribution.
 
+* **Obstacle 7: The Silent Schema Drift (18 vs 13 Features)**
+  * *The Threat:* Experimental log and consonant features caused a mismatch between the 18 columns expected by local notebooks and the 13 columns sent by Pydantic API schemas, threatening silently dropped data during live demo calls.
+  * *The Fix:* Executed **Option A (Clean Schema Realignment)**, resetting Twitter to 13 canonical features and Meta to 7 canonical features across ETL scripts, model trainers, predictor modules, and Pydantic request schemas.
+
 ---
 
 ### The Dual-Platform Paradigm Shift
@@ -53,11 +58,11 @@ Social media platforms operate on radically different structural mechanics. Enfo
 
 #### 🐦 Twitter / X Pipeline Architecture (`build_twitter.py`)
 - **Dataset**: 64,919 Unique Accounts (41,948 Genuine / 22,971 Fake).
-- **Core Features (18 Features)**: `followers`, `following`, `post_count`, `log_followers`, `log_following`, `log_post_count`, `verified`, `description_length`, `account_age_days`, `follower_following_ratio`, `following_followers_ratio`, `reputation_score`, `username_length`, `digits_in_username`, `digit_ratio_username`, `consonant_ratio_username`, `has_url`, `posts_per_day`.
+- **Canonical Schema (13 Features)**: `followers`, `following`, `post_count`, `verified`, `description_length`, `account_age_days`, `follower_following_ratio`, `reputation_score`, `username_length`, `digits_in_username`, `digit_ratio_username`, `has_url`, `posts_per_day`.
 
 #### 📸 Meta / Instagram Pipeline Architecture (`build_meta.py`)
 - **Dataset**: 36,383 Unique Accounts (16,343 Genuine / 20,040 Fake).
-- **Core Features (12 Features)**: `followers`, `following`, `post_count`, `log_followers`, `log_following`, `log_post_count`, `has_profile_pic`, `bio_length`, `profile_pic_bio_score`, `follower_following_ratio`, `following_followers_ratio`, `reputation_score`.
+- **Canonical Schema (7 Features)**: `followers`, `following`, `post_count`, `has_profile_pic`, `bio_length`, `follower_following_ratio`, `reputation_score`.
 
 ---
 
@@ -85,16 +90,25 @@ Social media platforms operate on radically different structural mechanics. Enfo
 
 ---
 
-### Production Explainability & Real-Time Risk Engine (`explain.py`)
+### Production Explainability & Real-Time Risk Engine (`models/predict.py`)
 
 The inference engine receives raw account feature dictionaries and executes the following pipeline:
 1. **Dynamic Platform Routing**: Autodetects platform context (`twitter` vs `meta`).
-2. **Feature Imputation & Log Preprocessing**: Computes `log_followers`, `log_following`, `following_followers_ratio`, `consonant_ratio_username`, and `profile_pic_bio_score` dynamically on raw payload inputs.
+2. **Feature Imputation & Ratio Preprocessing**: Computes derived ratios (`follower_following_ratio`, `reputation_score`, `posts_per_day`, `digit_ratio_username`) dynamically if only raw counts are passed.
 3. **Probability Scoring & 3-Class Categorization**:
    - `Risk Score < 30%` ➔ **`REAL`**
    - `30% <= Risk Score <= 70%` ➔ **`SUSPICIOUS`**
    - `Risk Score > 70%` ➔ **`FAKE`**
 4. **SHAP Natural Language Reasons**: Translates positive SHAP decision tree contributions into human-readable English:
-   - ❌ *"Unpronounceable consonant pattern in username (0.86)."*
-   - ❌ *"Aggressive mass-following ratio relative to followers (42.5)."*
-   - ❌ *"Incomplete profile credentials (no avatar or bio)."*
+   - ❌ *"Suspicious follower-to-following ratio (0.0)."*
+   - ❌ *"Abnormal activity density (2500.0 posts per day)."*
+   - ❌ *"Account lacks a valid profile picture (default avatar)."*
+
+---
+
+### Phase 3 FastAPI Architecture (`backend/main.py`)
+
+Exposes model inference over HTTP:
+- **`POST /analyze`**: Analyzes single account payload, returning risk score, classification, confidence rating, and SHAP reasons.
+- **`POST /analyze/batch`**: Analyzes bulk arrays of accounts.
+- **`GET /health`**: Healthcheck endpoint for live deployment monitoring.

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { PRESET_ACCOUNTS } from './presets';
 import { analyzeAccount, checkHealth } from './api';
 import { AccountFeatures, AnalyzeResponse } from './types';
-import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen } from 'lucide-react';
+import { BatchView } from './BatchView';
+import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw } from 'lucide-react';
 import './index.css';
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
   };
 
   const handleAnalyze = async () => {
+    if (loading) return; // Prevent double click mid-request
     setLoading(true);
     setError(null);
     setResult(null);
@@ -72,6 +74,11 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setError(null);
   };
 
   return (
@@ -236,17 +243,28 @@ export default function App() {
             )}
           </div>
 
-          <button className="analyze-btn" onClick={handleAnalyze} disabled={loading}>
-            {loading ? (
-              <>
-                <div className="spinner" /> Analyzing Account Metrics...
-              </>
-            ) : (
-              <>
-                <Search size={18} /> Analyze Account Security Risk
-              </>
-            )}
-          </button>
+          <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
+            <button className="analyze-btn" onClick={handleAnalyze} disabled={loading} style={{ flex: 1, marginTop: 0 }}>
+              {loading ? (
+                <>
+                  <div className="spinner" /> Analyzing Account Metrics...
+                </>
+              ) : (
+                <>
+                  <Search size={18} /> Analyze Account Security Risk
+                </>
+              )}
+            </button>
+
+            <button
+              className="analyze-btn"
+              onClick={handleReset}
+              style={{ width: "auto", marginTop: 0, background: "var(--bg-card)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}
+              title="Reset Results"
+            >
+              <RotateCcw size={16} /> Reset
+            </button>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: EDITORIAL REPORT PANEL */}
@@ -324,6 +342,9 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* SECTION 04: BATCH CSV ANALYSIS */}
+      <BatchView />
     </div>
   );
 }

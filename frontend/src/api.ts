@@ -1,14 +1,14 @@
 import axios from "axios";
 import { AccountFeatures, AnalyzeResponse } from "./types";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export const api = axios.create({
   baseURL: API_BASE,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 5000, // Hard kill switch at 5 seconds for single account requests
 });
 
 export async function analyzeAccount(

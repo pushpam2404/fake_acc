@@ -11,7 +11,7 @@ Production-ready machine learning framework, FastAPI backend, and React web dash
 
 ---
 
-## ⚡ Quickstart
+## ⚡ Quickstart (Local Development)
 
 ### 1. Backend Server (`http://localhost:8000`)
 ```bash
@@ -28,12 +28,33 @@ npm run dev
 
 ---
 
+## 🌐 Production Cloud Deployment Guide
+
+### Part A: Backend Web Service ➔ Render (`render.com`)
+1. Create new Web Service on Render connecting this GitHub repository.
+2. Set **Root Directory**: `.` (or leave empty)
+3. Set **Build Command**: `pip install -r backend/requirements.txt`
+4. Set **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+5. Verify health check: `curl https://sih1775-backend.onrender.com/health`
+
+### Part B: Frontend Web App ➔ Vercel (`vercel.com`)
+1. Create new Project on Vercel importing this GitHub repository.
+2. Set **Root Directory**: `frontend`
+3. Set Environment Variable: `VITE_API_BASE` = `https://sih1775-backend.onrender.com`
+4. Deploy!
+
+> [!NOTE]
+> **Free Tier Warm-Up Tip**: Render free instances spin down after 15 minutes of inactivity. Ping `/health` 2 minutes prior to live stage presentations to warm up the model in memory.
+
+---
+
 ## 📌 Technical Architecture
 
 ```text
 fake-account-detection/
 ├── backend/
-│   ├── main.py             # FastAPI REST service & CORS middleware
+│   ├── main.py             # FastAPI REST service, CSV batch route & CORS middleware
+│   ├── requirements.txt    # Pinned production backend dependencies
 │   └── schemas.py          # Pydantic request/response data contracts
 ├── data/
 │   ├── raw/                # Raw multi-platform datasets (Cresci, Satish, LIMFADD)
@@ -42,9 +63,24 @@ fake-account-detection/
 │   ├── build_twitter.py    # Twitter 13-feature ETL & ratio engineering
 │   └── build_meta.py       # Meta 7-feature ETL & ratio engineering
 ├── frontend/               # React + TypeScript + Vite Editorial Dashboard
+│   ├── src/
+│   │   ├── App.tsx         # Main Editorial Dashboard React component
+│   │   ├── BatchView.tsx   # Central Agency Batch CSV upload table
+│   │   ├── api.ts          # Axios HTTP client connecting to FastAPI
+│   │   ├── presets.ts      # Sample telemetry profiles for Twitter and Meta
+│   │   ├── types.ts        # TypeScript contracts matching backend schemas
+│   │   └── index.css       # Light Parchment Editorial design system
+│   ├── .env                # Local VITE_API_BASE config
+│   ├── .env.example        # Production VITE_API_BASE template
+│   ├── vercel.json         # Vercel deployment spec
+│   ├── index.html          # HTML entry point (Playfair Display & Inter fonts)
+│   ├── package.json        # React frontend dependencies
+│   └── vite.config.ts      # Vite dev server configuration
 ├── models/
 │   ├── saved/              # Tuned model binaries (twitter_xgboost_tuned.pkl, meta_xgboost_tuned.pkl)
 │   └── predict.py          # Dual-platform predictor & SHAP explainability engine
+├── demo_batch.csv          # Sample 10-account mixed dataset for batch testing
+├── render.yaml             # Render service deployment specification
 ├── test_payload.json       # API test payload
 ├── PROJECT_SUMMARY.md      # Detailed hackathon journey & presentation guide
 └── README.md               # Quick technical overview
@@ -59,7 +95,7 @@ fake-account-detection/
 
 ---
 
-## 📊 Performance Benchmarks
+## 📊 Benchmark Performance
 
 | Platform | Production Model | Dataset Size | Accuracy | F1-Score | Inference Latency |
 | :--- | :--- | :---: | :---: | :---: | :---: |

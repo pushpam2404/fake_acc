@@ -1,11 +1,13 @@
 # 🛡️ Dual-Platform Fake Account & Bot Detection Engine
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-5.0-646CFF.svg)](https://vitejs.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-1.7%2B-orange.svg)](https://xgboost.readthedocs.io/)
 [![SHAP](https://img.shields.io/badge/SHAP-Explainability-brightgreen.svg)](https://shap.readthedocs.io/)
 
-A production-ready machine learning system and FastAPI backend for detecting fake, bot, and automated accounts across **Twitter/X** and **Meta (Instagram & Facebook)** platforms, complete with real-time SHAP natural language explanations.
+A production-ready machine learning system, FastAPI REST backend, and React web dashboard for detecting fake, bot, and automated accounts across **Twitter/X** and **Meta (Instagram & Facebook)** platforms, complete with real-time SHAP natural language explanations.
 
 ---
 
@@ -15,6 +17,7 @@ A production-ready machine learning system and FastAPI backend for detecting fak
 - **Tuned XGBoost Estimators**: High-precision gradient boosted decision trees tuned with dynamic class imbalance weighting (`scale_pos_weight`).
 - **SHAP Explainability Engine**: Translates complex decision tree feature contributions into human-readable English reasons (e.g. *"Suspicious follower-to-following ratio"*, *"Account lacks profile picture"*).
 - **FastAPI REST Service**: Production backend featuring Pydantic contract validation, CORS middleware, single-account `/analyze`, batch processing `/analyze/batch`, and `/health` monitoring.
+- **Editorial React Dashboard**: Single-page React + TypeScript frontend featuring a Warm Parchment Editorial theme, dual-platform context switching, hardcoded sample telemetry profiles, and 2-decimal risk probability meters.
 
 ---
 
@@ -30,7 +33,17 @@ fake-account-detection/
 │   └── processed/          # Processed dataset matrices (twitter_master.csv, meta_master.csv)
 ├── feature_extractor/
 │   ├── build_twitter.py    # Twitter ETL & feature engineering pipeline (13 features)
-│   └── build_meta.py       # Meta/IG ETL & feature engineering pipeline (7 features)
+│   └── build_meta.py       # Meta/IG/FB ETL & feature engineering pipeline (7 features)
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx         # Main Editorial Dashboard React component
+│   │   ├── api.ts          # Axios HTTP client connecting to FastAPI
+│   │   ├── presets.ts      # Sample telemetry profiles for Twitter and Meta
+│   │   ├── types.ts        # TypeScript contracts matching backend schemas
+│   │   └── index.css       # Light Parchment Editorial design system
+│   ├── index.html          # HTML entry point (Playfair Display & Inter fonts)
+│   ├── package.json        # React frontend dependencies
+│   └── vite.config.ts      # Vite dev server configuration
 ├── models/
 │   ├── experiments/
 │   │   ├── compare_twitter_models.py # Twitter Gladiator Arena benchmark script
@@ -54,7 +67,7 @@ fake-account-detection/
 ### 🐦 Twitter / X Schema (13 Features)
 `followers`, `following`, `post_count`, `verified`, `description_length`, `account_age_days`, `follower_following_ratio`, `reputation_score`, `username_length`, `digits_in_username`, `digit_ratio_username`, `has_url`, `posts_per_day`.
 
-### 📸 Meta / Instagram Schema (7 Features)
+### 📸 Meta / Instagram & Facebook Schema (7 Features)
 `followers`, `following`, `post_count`, `has_profile_pic`, `bio_length`, `follower_following_ratio`, `reputation_score`.
 
 ---
@@ -69,7 +82,7 @@ fake-account-detection/
 | 🥉 | **Tuned XGBoost (Production Champion)** | **90.04%** | **87.47%** | **83.87%** | **85.63%** | **0.21s** |
 | 4 | Logistic Regression | 81.64% | 76.78% | 68.96% | 72.66% | 0.02s |
 
-### 📸 Meta / Instagram Platform (36,383 Accounts)
+### 📸 Meta / Instagram & Facebook Platform (36,383 Accounts)
 | Rank | Model | Accuracy | Precision (Fake) | Recall (Fake) | F1-Score | Inference Latency |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
 | 🥇 | **Soft-Voting Ensemble** | **97.05%** | **97.57%** | **97.06%** | **97.31%** | 1.63s |
@@ -79,38 +92,28 @@ fake-account-detection/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart Guide
 
-### 1. Installation & Environment
+### 1. Backend Server Setup
 ```bash
-# Clone the repository
-git clone https://github.com/pushpam2404/fake_acc.git
-cd fake_acc
+# In Terminal Window 1
+cd fake-account-detection
 
-# Create & activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install pandas numpy scikit-learn xgboost joblib shap fastapi uvicorn pydantic
+# Launch FastAPI backend via virtual environment
+./.venv/bin/uvicorn backend.main:app --reload --port 8000
 ```
+Swagger API docs: `http://localhost:8000/docs`
 
-### 2. Build Datasets & Train Models
+### 2. Frontend React Dashboard Setup
 ```bash
-# Rebuild feature matrices
-python feature_extractor/build_twitter.py
-python feature_extractor/build_meta.py
+# In Terminal Window 2
+cd fake-account-detection/frontend
 
-# Retrain tuned models
-python models/experiments/tune_xgboost_twitter.py
-python models/experiments/tune_xgboost_meta.py
+# Install dependencies (local to node_modules) & run Vite dev server
+npm install
+npm run dev
 ```
-
-### 3. Launch FastAPI Backend Service
-```bash
-uvicorn backend.main:app --reload --port 8000
-```
-Interactive Swagger API documentation will be available at: `http://localhost:8000/docs`
+React Web App: `http://localhost:5173`
 
 ---
 
@@ -136,12 +139,4 @@ curl -X POST http://localhost:8000/analyze \
     "Anomalous follower count (0)."
   ]
 }
-```
-
-### Healthcheck (`GET /health`)
-```bash
-curl http://localhost:8000/health
-```
-```json
-{"status": "ok", "message": "Backend and ML Models are online."}
 ```

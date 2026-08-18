@@ -1,0 +1,100 @@
+import { PresetAccount } from "./types";
+
+export const PRESET_ACCOUNTS: PresetAccount[] = [
+  // --- TWITTER PRESETS ---
+  {
+    id: "tw_bot",
+    name: "Mass-Spam Twitter Bot",
+    platform: "twitter",
+    description: "New account, 4500 following vs 12 followers, 2500 posts/day, no bio.",
+    features: {
+      platform: "twitter",
+      username: "bot987654321",
+      followers: 12,
+      following: 4500,
+      post_count: 5000,
+      verified: 0,
+      description_length: 0,
+      account_age_days: 2,
+      has_url: 1,
+    },
+  },
+  {
+    id: "tw_genuine",
+    name: "Verified Human Developer",
+    platform: "twitter",
+    description: "3+ year old verified account, healthy 850/320 follower balance.",
+    features: {
+      platform: "twitter",
+      username: "alex_tech_dev",
+      followers: 850,
+      following: 320,
+      post_count: 340,
+      verified: 1,
+      description_length: 65,
+      account_age_days: 1200,
+      has_url: 1,
+    },
+  },
+  {
+    id: "tw_suspicious",
+    name: "Borderline Crypto Promoter",
+    platform: "twitter",
+    description: "60-day old account, high following ratio (1900), low posts.",
+    features: {
+      platform: "twitter",
+      username: "crypto_guy_99",
+      followers: 210,
+      following: 1900,
+      post_count: 25,
+      verified: 0,
+      description_length: 14,
+      account_age_days: 60,
+      has_url: 1,
+    },
+  },
+
+  // --- META / INSTAGRAM & FACEBOOK PRESETS ---
+  {
+    id: "meta_fake",
+    name: "Default Avatar IG Bot",
+    platform: "meta",
+    description: "0 posts, 0 followers, 4000 following, no profile picture, blank bio.",
+    features: {
+      platform: "meta",
+      followers: 0,
+      following: 4000,
+      post_count: 0,
+      has_profile_pic: 0,
+      bio_length: 0,
+    },
+  },
+  {
+    id: "meta_fb_fake",
+    name: "Spam Facebook Page",
+    platform: "meta",
+    description: "Fake Facebook page with 5000 following, 0 followers, default picture.",
+    features: {
+      platform: "meta",
+      followers: 0,
+      following: 5000,
+      post_count: 1,
+      has_profile_pic: 0,
+      bio_length: 0,
+    },
+  },
+  {
+    id: "meta_genuine",
+    name: "Active Meta Creator",
+    platform: "meta",
+    description: "1250 followers, profile picture set, rich bio, consistent posts.",
+    features: {
+      platform: "meta",
+      followers: 1250,
+      following: 420,
+      post_count: 180,
+      has_profile_pic: 1,
+      bio_length: 120,
+    },
+  },
+];

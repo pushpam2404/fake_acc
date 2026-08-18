@@ -6,7 +6,7 @@ A comprehensive, production-ready machine learning framework for detecting fake,
 
 ### The Foundation: What I Have Built (Progress)
 
-I have successfully transitioned from wrestling with fragmented, corrupted raw data to possessing a mathematically sound, production-ready machine learning inference engine and FastAPI REST API backend.
+I have successfully transitioned from wrestling with fragmented, corrupted raw data to possessing a mathematically sound, production-ready machine learning inference engine, FastAPI REST API backend, and React web dashboard.
 
 * **Reconnaissance & Labeling (`inspect_raw.py`):** I built a scanner that dynamically intercepts missing target variables by parsing file names (extracting `1` for "fake" and `0` for "genuine"). This single script saved over 12,000 rows of high-quality data from the void.
 * **Bifurcated ETL Pipelines (`build_twitter.py`, `build_meta.py`):** I abandoned the "Universal Schema" trap. By splitting the architecture into domain-isolated pipelines that respect the structural differences between Twitter (13 features) and Meta (7 features), I guaranteed dense, high-signal matrices without a sea of Null values.
@@ -15,6 +15,7 @@ I have successfully transitioned from wrestling with fragmented, corrupted raw d
 * **Hyperparameter Optimization (`tune_xgboost_twitter.py`, `tune_xgboost_meta.py`):** I maxed out my M4 Mac's multi-core processing to run randomized cross-validation searches. This pushed the XGBoost model to **90.04% accuracy / 85.63% F1-Score on Twitter** and **96.87% accuracy / 97.15% F1-Score on Meta**, mapping highly complex decision boundaries.
 * **The Prediction & Explainability Engine (`models/predict.py` & `test_predict.py`):** I integrated SHAP (SHapley Additive exPlanations) into a lean, self-explanatory inference module (`models/predict.py`). It outputs human-readable English reasons for *why* an account is fake, backed by an isolated 30-row stress test proving robust performance outside the training environment.
 * **FastAPI Backend REST API (`backend/main.py` & `backend/schemas.py`):** I built a high-performance, asynchronous FastAPI backend exposing HTTP endpoints (`POST /analyze`, `POST /analyze/batch`, `GET /health`) with Pydantic contract validation and CORS middleware pre-configured for React frontend integration.
+* **Editorial React Web Dashboard (`frontend/`):** I built a publication-grade React + TypeScript frontend featuring a Light Warm Parchment Paper theme, Playfair Display typography, dual-platform switching (Twitter vs Meta), hardcoded verified sample presets, 2-decimal precision risk meters, and full description cards with zero text truncation.
 
 ---
 
@@ -50,6 +51,10 @@ The path was littered with data engineering landmines that would have derailed a
   * *The Threat:* Experimental log and consonant features caused a mismatch between the 18 columns expected by local notebooks and the 13 columns sent by Pydantic API schemas, threatening silently dropped data during live demo calls.
   * *The Fix:* Executed **Option A (Clean Schema Realignment)**, resetting Twitter to 13 canonical features and Meta to 7 canonical features across ETL scripts, model trainers, predictor modules, and Pydantic request schemas.
 
+* **Obstacle 8: Zero-Global-Install Architecture & Clean Local Scoping**
+  * *The Threat:* Installing frontend or backend packages globally risks polluting the OS host environment.
+  * *The Fix:* Enforced 100% local project isolation using Python `.venv/` for backend packages and `frontend/node_modules/` for React packages. Added clean `.gitignore` rules to prevent committing built `dist/` or `node_modules/` artifacts.
+
 ---
 
 ### The Dual-Platform Paradigm Shift
@@ -60,7 +65,7 @@ Social media platforms operate on radically different structural mechanics. Enfo
 - **Dataset**: 64,919 Unique Accounts (41,948 Genuine / 22,971 Fake).
 - **Canonical Schema (13 Features)**: `followers`, `following`, `post_count`, `verified`, `description_length`, `account_age_days`, `follower_following_ratio`, `reputation_score`, `username_length`, `digits_in_username`, `digit_ratio_username`, `has_url`, `posts_per_day`.
 
-#### 📸 Meta / Instagram Pipeline Architecture (`build_meta.py`)
+#### 📸 Meta / Instagram & Facebook Pipeline Architecture (`build_meta.py`)
 - **Dataset**: 36,383 Unique Accounts (16,343 Genuine / 20,040 Fake).
 - **Canonical Schema (7 Features)**: `followers`, `following`, `post_count`, `has_profile_pic`, `bio_length`, `follower_following_ratio`, `reputation_score`.
 
@@ -78,7 +83,7 @@ Social media platforms operate on radically different structural mechanics. Enfo
 | 5 | Neural Network (MLP) | 87.82% | 85.16% | 79.43% | 82.19% | 26.89s |
 | 6 | Logistic Regression (Baseline) | 81.64% | 76.78% | 68.96% | 72.66% | 0.02s |
 
-#### 📸 Meta / Instagram Dataset Leaderboard (36,383 Accounts)
+#### 📸 Meta / Instagram & Facebook Dataset Leaderboard (36,383 Accounts)
 | Rank | Model | Accuracy | Precision (Fake) | Recall (Fake) | F1-Score | Inference Time |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
 | 🥇 | **Soft-Voting Ensemble (RF+XGB+ET)** | **97.05%** | **97.57%** | **97.06%** | **97.31%** | 1.63s |
@@ -106,9 +111,7 @@ The inference engine receives raw account feature dictionaries and executes the 
 
 ---
 
-### Phase 3 FastAPI Architecture (`backend/main.py`)
+### Phase 3 & Phase 4 Application Stack (`backend/` & `frontend/`)
 
-Exposes model inference over HTTP:
-- **`POST /analyze`**: Analyzes single account payload, returning risk score, classification, confidence rating, and SHAP reasons.
-- **`POST /analyze/batch`**: Analyzes bulk arrays of accounts.
-- **`GET /health`**: Healthcheck endpoint for live deployment monitoring.
+- **FastAPI Backend (`backend/main.py`)**: Exposes `POST /analyze`, `POST /analyze/batch`, and `GET /health` with CORS middleware.
+- **React Editorial Dashboard (`frontend/`)**: Renders warm parchment paper theme (`#f6f4ee`), Playfair Display typography, platform context switching, preset profile carousel, 2-decimal precision risk gauge, and SHAP decision tree attribution.

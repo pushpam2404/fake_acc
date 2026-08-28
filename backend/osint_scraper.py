@@ -48,6 +48,24 @@ OFFLINE_INTEL_CACHE = {
         "platform": "twitter",
         "username": "itbp_official"
     },
+    "virat.kohli": {
+        "followers": 272000000,
+        "following": 278,
+        "post_count": 1058,
+        "has_profile_pic": 1,
+        "bio_length": 65,
+        "platform": "meta",
+        "username": "virat.kohli"
+    },
+    "viratkohli": {
+        "followers": 272000000,
+        "following": 278,
+        "post_count": 1058,
+        "has_profile_pic": 1,
+        "bio_length": 65,
+        "platform": "meta",
+        "username": "virat.kohli"
+    },
     "cristiano": {
         "followers": 640000000,
         "following": 500,

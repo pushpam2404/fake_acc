@@ -140,8 +140,17 @@ async def analyze_url(payload: UrlRequest):
             print(f"Playwright scrape notice: {pe}")
             playwright_data = {}
 
-        # 2. Extract Tabular Metrics (combining Playwright with OSINT fallbacks if needed)
-        osint_features = scrape_profile_data(payload.url)
+        # 2. Extract Tabular Metrics (only fetch secondary OSINT if Playwright didn't get valid numbers)
+        has_full_counts = bool(playwright_data.get("followers", 0) > 0 and playwright_data.get("followers") != 100)
+        
+        if not has_full_counts:
+            try:
+                osint_features = scrape_profile_data(payload.url)
+            except Exception:
+                osint_features = {}
+        else:
+            osint_features = {}
+
         username = playwright_data.get("username") or osint_features.get("username", "unknown_user")
         platform = playwright_data.get("platform") or osint_features.get("platform", "auto")
         

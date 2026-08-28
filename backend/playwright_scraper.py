@@ -114,6 +114,34 @@ PRESET_MEDIA_FIXTURES = {
             }
         ]
     },
+    "virat.kohli": {
+        "platform": "meta",
+        "bio": "Carpediem! 🏏 Athlete, Dreamer, Grateful.",
+        "external_url": "https://one8.com",
+        "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "followers": 272000000,
+        "following": 278,
+        "post_count": 1058,
+        "has_profile_pic": 1,
+        "posts": [
+            {
+                "id": "vk_1",
+                "thumbnail_url": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500&auto=format&fit=crop&q=80",
+                "caption": "Always a special feeling stepping out onto the field in blue. Gratitude for all the love and support from fans across India! 🇮🇳🏏",
+                "likes": 4200000,
+                "comments": 28000,
+                "timestamp": "1d ago"
+            },
+            {
+                "id": "vk_2",
+                "thumbnail_url": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=80",
+                "caption": "Consistency in preparation defines performance. Pushing boundaries everyday with the squad. #Fitness #Discipline",
+                "likes": 3600000,
+                "comments": 19500,
+                "timestamp": "4d ago"
+            }
+        ]
+    },
     "sray_639": {
         "platform": "meta",
         "bio": "⚡️ Exclusive Web3 Access • DM for Signals • Claim Free Crypto Airdrop below 👇",
@@ -287,12 +315,10 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
             page = await context.new_page()
             page.set_default_timeout(9000)
 
-            # Route target URL
-            if url.startswith("http"):
-                target_url = url
-            elif platform == "twitter":
+            # Route clean canonical profile URL (stripping tracking query params)
+            if platform == "twitter":
                 target_url = f"https://x.com/{handle}"
-            elif platform == "meta" and "facebook" in url.lower():
+            elif platform == "meta" and ("facebook" in url.lower() or "fb.com" in url.lower()):
                 target_url = f"https://facebook.com/{handle}"
             else:
                 target_url = f"https://instagram.com/{handle}"

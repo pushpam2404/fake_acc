@@ -8,7 +8,7 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 5000, // Hard kill switch at 5 seconds for single account requests
+  timeout: 30000, // 30 seconds for live Playwright headless browser extraction
 });
 
 export async function analyzeAccount(

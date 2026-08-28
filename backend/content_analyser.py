@@ -11,12 +11,15 @@ logger = logging.getLogger("ContentAnalyser")
 # Lazy-load sentence transformer to ensure fast server startup
 _embedding_model = None
 
+import importlib
+
 def get_embedding_model():
     global _embedding_model
     if _embedding_model is None:
         try:
             logger.info("Initializing SentenceTransformer neural model (all-MiniLM-L6-v2)...")
-            from sentence_transformers import SentenceTransformer
+            st_module = importlib.import_module("sentence_transformers")
+            SentenceTransformer = getattr(st_module, "SentenceTransformer")
             _embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
             logger.info("SentenceTransformer model loaded successfully.")
         except Exception as e:

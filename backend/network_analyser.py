@@ -91,6 +91,6 @@ def analyze_profile_network(username: str, platform: str, risk_score: float) -> 
     return {
         "nodes": nodes,
         "edges": edges,
-        "clique_count": nx.graph_number_of_cliques(nx.make_max_clique_graph(G)) if classification == "FAKE" else 1,
+        "clique_count": len(list(nx.find_cliques(G))) if classification == "FAKE" else 1,
         "density": round(nx.density(G), 3)
     }

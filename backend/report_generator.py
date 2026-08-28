@@ -148,19 +148,41 @@ def build_pdf_report(username: str, features: dict, prediction: dict) -> bytes:
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(2)
     
-    pdf.set_font("Helvetica", "", 10)
+    pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(55, 65, 81)
     network_notes = (
         "Forensic Network Audit Note: This account has been checked against our active relational graph DB. "
         "A high correlation score here indicates that multiple accounts share metadata footprints such as identical "
-        "profile birth creation hours, identical posting phase-frequency delays, and shared lexical repetition clusters. "
-        "Further subpoena actions are advised to retrieve underlying log headers (JA3 fingerprints & IP routing pathways)."
+        "profile birth creation hours, identical posting phase-frequency delays, and shared lexical repetition clusters."
     )
-    pdf.multi_cell(190, 5, network_notes, border=0)
-    pdf.ln(8)
+    pdf.multi_cell(190, 4.5, network_notes, border=0)
+    pdf.ln(3)
+
+    # 6. MULTIMODAL CONTENT & PHISHING AUDIT (PLAYWRIGHT NLP & VISION)
+    content_analysis = prediction.get("content_analysis")
+    if content_analysis:
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.set_text_color(31, 41, 55)
+        pdf.cell(0, 6, "4. MULTIMODAL CONTENT & PHISHING FORENSIC AUDIT (PLAYWRIGHT NLP)", new_x="LMARGIN", new_y="NEXT")
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(2)
+
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(55, 65, 81)
+        
+        phish_level = content_analysis.get("phishing_threat_level", "LOW")
+        sim_score = content_analysis.get("caption_similarity", {}).get("similarity_score", 0.0)
+        posts_count = content_analysis.get("posts_analyzed", 0)
+
+        pdf.cell(0, 5, f"Content Threat Level: {phish_level}  |  Caption Uniformity: {sim_score}%  |  Posts Analyzed: {posts_count}", new_x="LMARGIN", new_y="NEXT")
+        
+        for reason in content_analysis.get("forensic_reasons", [])[:3]:
+            pdf.cell(5, 5, "- ", border=0)
+            pdf.multi_cell(185, 5, reason, border=0, new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
     
-    # 6. SIGN-OFF BLOCK
-    pdf.set_y(-55)
+    # 7. SIGN-OFF BLOCK
+    pdf.set_y(-45)
     pdf.set_font("Helvetica", "B", 9)
     pdf.set_text_color(31, 41, 55)
     pdf.cell(95, 5, "REPORT DIGEST MD5 SHA256 HASH", border=0)

@@ -125,17 +125,32 @@ def export_report(payload: ReportRequest):
         raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
 
 @app.post("/analyze/url")
-def analyze_url(payload: UrlRequest):
+async def analyze_url(payload: UrlRequest):
     try:
+        from backend.playwright_scraper import scrape_with_playwright
+        from backend.content_analyser import analyze_multimodal_content
         from backend.osint_scraper import scrape_profile_data
+        from backend.network_analyser import analyze_profile_network
         
-        # Scrape features from URL
-        features = scrape_profile_data(payload.url)
-        username = features.get("username", "unknown_user")
-        platform = features.get("platform", "auto")
+        # 1. Execute Playwright Headless Scraping for rich media, captions, and bio
+        playwright_data = {}
+        try:
+            playwright_data = await scrape_with_playwright(payload.url)
+        except Exception as pe:
+            print(f"Playwright scrape notice: {pe}")
+            playwright_data = {}
+
+        # 2. Extract Tabular Metrics (combining Playwright with OSINT fallbacks if needed)
+        osint_features = scrape_profile_data(payload.url)
+        username = playwright_data.get("username") or osint_features.get("username", "unknown_user")
+        platform = playwright_data.get("platform") or osint_features.get("platform", "auto")
         
-        # Run prediction
-        predict_input = {k: v for k, v in features.items() if k not in ["username", "platform"]}
+        features = {**osint_features, **{k: v for k, v in playwright_data.items() if k in ['followers', 'following', 'post_count', 'has_profile_pic', 'bio_length'] and v is not None}}
+        features["username"] = username
+        features["platform"] = platform
+
+        # 3. Run XGBoost Machine Learning Tabular Prediction
+        predict_input = {k: v for k, v in features.items() if k not in ["username", "platform", "bio", "posts", "avatar_url", "external_url", "scraper_engine"]}
         result = predict(predict_input, platform=platform)
         
         if "error" in result:
@@ -145,8 +160,37 @@ def analyze_url(payload: UrlRequest):
         result["username"] = username
         result["raw_features"] = features
         
-        # Add network graph
-        from backend.network_analyser import analyze_profile_network
+        # 4. Run Multimodal NLP, Phishing & Caption Similarity Analysis
+        bio_text = playwright_data.get("bio") or ""
+        external_url = playwright_data.get("external_url")
+        posts = playwright_data.get("posts", [])
+        avatar_url = playwright_data.get("avatar_url")
+
+        content_analysis = analyze_multimodal_content(
+            bio=bio_text,
+            external_url=external_url,
+            posts=posts,
+            avatar_url=avatar_url
+        )
+
+        # 5. Compute Unified Multimodal Intelligence Risk Score (60% Tabular ML + 40% Multimodal NLP/Threat)
+        tabular_score = result["risk_score"]
+        content_score = content_analysis["content_risk_score"]
+        unified_risk = round((tabular_score * 0.60) + (content_score * 0.40), 2)
+
+        result["content_analysis"] = content_analysis
+        result["posts"] = posts
+        result["avatar_url"] = avatar_url
+        result["bio"] = bio_text
+        result["external_url"] = external_url
+        result["multimodal_risk_score"] = unified_risk
+
+        # If multimodal content shows critical phishing, elevate classification if needed
+        if content_analysis["phishing_threat_level"] in ["CRITICAL", "HIGH"] and result["classification"] == "REAL":
+            result["classification"] = "SUSPICIOUS"
+            result["reasons"].insert(0, f"Multimodal Phishing Alert: {content_analysis['forensic_reasons'][0]}")
+
+        # 6. Add Coordinated Network Graph
         result["network_graph"] = analyze_profile_network(
             username, 
             result["platform"], 
@@ -157,8 +201,11 @@ def analyze_url(payload: UrlRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/analyze/deep")
+async def analyze_deep(payload: UrlRequest):
+    """Alias for deep Playwright multimodal audit."""
+    return await analyze_url(payload)
+
 @app.get("/health")
-
 def health():
-
-    return {"status": "ok", "message": "Backend and ML Models are online."}
+    return {"status": "ok", "message": "Backend, ML Models, and Playwright Multimodal Engine are online."}

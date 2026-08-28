@@ -3,8 +3,9 @@ import { PRESET_ACCOUNTS } from './presets';
 import { analyzeAccount, checkHealth, analyzeUrl, downloadReport } from './api';
 import { AccountFeatures, AnalyzeResponse } from './types';
 import { BatchView } from './BatchView';
-import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown, Sparkles } from 'lucide-react';
 import { NetworkGraph } from './NetworkGraph';
+import { MediaAuditView } from './MediaAuditView';
 import './index.css';
 
 
@@ -161,23 +162,34 @@ export default function App() {
             </h2>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.75rem' }}>
-            <input
-              type="text"
-              placeholder="e.g. https://x.com/username or https://instagram.com/username"
-              className="form-input"
-              style={{ flex: 1, margin: 0 }}
-              value={profileUrl}
-              onChange={(e) => setProfileUrl(e.target.value)}
-            />
-            <button
-              className="analyze-btn"
-              style={{ width: 'auto', marginTop: 0, padding: '0 1.25rem', whiteSpace: 'nowrap' }}
-              onClick={handleAnalyzeUrl}
-              disabled={scraping || !profileUrl}
-            >
-              {scraping ? 'Scanning...' : 'Scan URL'}
-            </button>
+          <div style={{ marginBottom: '1.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                placeholder="e.g. https://x.com/username or https://instagram.com/username"
+                className="form-input"
+                style={{ flex: 1, margin: 0 }}
+                value={profileUrl}
+                onChange={(e) => setProfileUrl(e.target.value)}
+              />
+              <button
+                className="analyze-btn"
+                style={{ width: 'auto', marginTop: 0, padding: '0 1.25rem', whiteSpace: 'nowrap' }}
+                onClick={handleAnalyzeUrl}
+                disabled={scraping || !profileUrl}
+              >
+                {scraping ? (
+                  <>
+                    <div className="spinner" /> Scraping Headless DOM & NLP...
+                  </>
+                ) : (
+                  'Deep Scan URL'
+                )}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '6px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              <span>⚡ Powered by <b>Playwright Chromium</b> + <b>SentenceTransformer (all-MiniLM-L6-v2)</b></span>
+            </div>
           </div>
 
           {/* SECTION 01: PLATFORM SELECTION */}
@@ -409,6 +421,16 @@ export default function App() {
                   ))}
                 </ul>
               </div>
+
+              {/* MULTIMODAL MEDIA & PHISHING AUDIT */}
+              <MediaAuditView
+                contentAnalysis={result.content_analysis}
+                posts={result.posts}
+                avatarUrl={result.avatar_url}
+                bio={result.bio}
+                externalUrl={result.external_url}
+                username={result.username}
+              />
 
               {/* CO-OCCURRENCE NETWORK GRAPH */}
               {result.network_graph && (

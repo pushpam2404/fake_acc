@@ -18,6 +18,36 @@ export interface AccountFeatures {
   platform?: "auto" | "twitter" | "meta";
 }
 
+export interface PostMediaItem {
+  id: string;
+  thumbnail_url: string;
+  caption: string;
+  likes?: number;
+  comments?: number;
+  timestamp?: string;
+}
+
+export interface ContentAnalysis {
+  content_risk_score: number;
+  phishing_threat_level: "LOW" | "MODERATE" | "ELEVATED" | "CRITICAL";
+  phishing_indicators: string[];
+  caption_similarity: {
+    similarity_score: number;
+    verdict: string;
+    is_repetitive: boolean;
+    method: string;
+  };
+  outbound_link_audit: {
+    url?: string | null;
+    risk_level: string;
+    is_shortened: boolean;
+    flag?: string | null;
+  };
+  has_avatar: boolean;
+  forensic_reasons: string[];
+  posts_analyzed: number;
+}
+
 export interface AnalyzeResponse {
   platform: "twitter" | "meta" | string;
   risk_score: number;
@@ -27,6 +57,12 @@ export interface AnalyzeResponse {
   username?: string;
   raw_features?: AccountFeatures;
   network_graph?: any;
+  content_analysis?: ContentAnalysis;
+  posts?: PostMediaItem[];
+  avatar_url?: string;
+  bio?: string;
+  external_url?: string;
+  multimodal_risk_score?: number;
 }
 
 export interface PresetAccount {
@@ -36,3 +72,4 @@ export interface PresetAccount {
   description: string;
   features: AccountFeatures;
 }
+

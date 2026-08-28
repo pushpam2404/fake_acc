@@ -10,4 +10,7 @@ python-multipart==0.0.32
 fpdf2
 networkx
 instaloader
-
+playwright
+sentence-transformers
+torch
+imagehash

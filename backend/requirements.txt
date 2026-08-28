@@ -7,3 +7,7 @@ pandas==3.0.5
 numpy==2.5.2
 shap==0.52.0
 python-multipart==0.0.32
+fpdf2
+networkx
+instaloader
+

@@ -25,6 +25,16 @@ class AnalyzeResponse(BaseModel):
     classification: str          # "REAL" | "SUSPICIOUS" | "FAKE"
     confidence: float
     reasons: List[str]
+    network_graph: Optional[dict] = None
+
 
 class BatchRequest(BaseModel):
     accounts: List[AccountFeatures]
+
+class ReportRequest(BaseModel):
+    username: str
+    features: dict
+    prediction: dict
+
+class UrlRequest(BaseModel):
+    url: str

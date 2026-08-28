@@ -24,6 +24,9 @@ export interface AnalyzeResponse {
   classification: "REAL" | "SUSPICIOUS" | "FAKE";
   confidence: number;
   reasons: string[];
+  username?: string;
+  raw_features?: AccountFeatures;
+  network_graph?: any;
 }
 
 export interface PresetAccount {

@@ -18,7 +18,24 @@ export async function analyzeAccount(
   return res.data;
 }
 
+export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
+  const res = await api.post<AnalyzeResponse>("/analyze/url", { url });
+  return res.data;
+}
+
+export async function downloadReport(
+  username: string,
+  features: AccountFeatures,
+  prediction: AnalyzeResponse
+): Promise<Blob> {
+  const res = await api.post("/analyze/report", { username, features, prediction }, {
+    responseType: "blob"
+  });
+  return res.data;
+}
+
 export async function checkHealth(): Promise<{ status: string; message: string }> {
   const res = await api.get<{ status: string; message: string }>("/health");
   return res.data;
 }
+

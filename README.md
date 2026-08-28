@@ -6,8 +6,10 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-1.7%2B-orange.svg)](https://xgboost.readthedocs.io/)
 [![SHAP](https://img.shields.io/badge/SHAP-Explainability-brightgreen.svg)](https://shap.readthedocs.io/)
+[![NetworkX](https://img.shields.io/badge/NetworkX-Graph_Analysis-blueviolet.svg)](https://networkx.org/)
+[![Instaloader](https://img.shields.io/badge/Instaloader-OSINT-yellow.svg)](https://instaloader.github.io/)
 
-Production-ready machine learning framework, FastAPI backend, and React web dashboard for detecting fake, bot, and automated accounts across **Twitter/X** and **Meta (Instagram & Facebook)** platforms with real-time SHAP natural language explanations.
+Intelligence-grade fake account & bot detection engine built for **ITBP / Ministry of Home Affairs (SIH-1775)**. Features real-time XGBoost classification with SHAP explainability, OSINT profile scraping via URL paste, coordinated botnet network graph analysis, and 1-click forensic PDF case file export across **Twitter/X** and **Meta (Instagram & Facebook)** platforms.
 
 ---
 
@@ -53,37 +55,39 @@ npm run dev
 ```text
 fake-account-detection/
 ├── backend/
-│   ├── main.py             # FastAPI REST service, CSV batch route & CORS middleware
-│   ├── requirements.txt    # Pinned production backend dependencies
-│   └── schemas.py          # Pydantic request/response data contracts
+│   ├── main.py                # FastAPI REST service, URL scanner, CSV batch, PDF export & CORS
+│   ├── schemas.py             # Pydantic request/response data contracts
+│   ├── osint_scraper.py       # OSINT profile extraction (Instaloader + URL parser + offline cache)
+│   ├── network_analyser.py    # NetworkX graph analysis (Degree Centrality, CIB cluster detection)
+│   ├── report_generator.py    # Forensic PDF case file generator (fpdf2, ITBP/MHA legal format)
+│   └── requirements.txt       # Pinned production backend dependencies
 ├── data/
-│   ├── raw/                # Raw multi-platform datasets (Cresci, Satish, LIMFADD)
-│   └── processed/          # Clean feature matrices (twitter_master.csv, meta_master.csv)
+│   ├── raw/                   # Raw multi-platform datasets (Cresci, Satish, LIMFADD)
+│   └── processed/             # Clean feature matrices (twitter_master.csv, meta_master.csv)
 ├── feature_extractor/
-│   ├── build_twitter.py    # Twitter 13-feature ETL & ratio engineering
-│   └── build_meta.py       # Meta 7-feature ETL & ratio engineering
-├── frontend/               # React + TypeScript + Vite Editorial Dashboard
+│   ├── build_twitter.py       # Twitter 13-feature ETL & ratio engineering
+│   └── build_meta.py          # Meta 7-feature ETL & ratio engineering
+├── frontend/                  # React + TypeScript + Vite Editorial Dashboard
 │   ├── src/
-│   │   ├── App.tsx         # Main Editorial Dashboard React component
-│   │   ├── BatchView.tsx   # Central Agency Batch CSV upload table
-│   │   ├── api.ts          # Axios HTTP client connecting to FastAPI
-│   │   ├── presets.ts      # Sample telemetry profiles for Twitter and Meta
-│   │   ├── types.ts        # TypeScript contracts matching backend schemas
-│   │   └── index.css       # Light Parchment Editorial design system
-│   ├── .env                # Local VITE_API_BASE config
-│   ├── .env.example        # Production VITE_API_BASE template
-│   ├── vercel.json         # Vercel deployment spec
-│   ├── index.html          # HTML entry point (Playfair Display & Inter fonts)
-│   ├── package.json        # React frontend dependencies
-│   └── vite.config.ts      # Vite dev server configuration
+│   │   ├── App.tsx            # Main Dashboard (URL scanner, form, results, PDF export)
+│   │   ├── BatchView.tsx      # Central Agency Batch CSV upload table
+│   │   ├── NetworkGraph.tsx   # Interactive SVG force-directed threat network graph
+│   │   ├── api.ts             # Axios HTTP client (analyze, analyzeUrl, downloadReport)
+│   │   ├── presets.ts         # Sample telemetry profiles for Twitter and Meta
+│   │   ├── types.ts           # TypeScript contracts matching backend schemas
+│   │   └── index.css          # Light Parchment Editorial design system + pulse animation
+│   ├── vercel.json            # Vercel deployment spec
+│   ├── index.html             # HTML entry point (Playfair Display & Inter fonts)
+│   ├── package.json           # React frontend dependencies
+│   └── vite.config.ts         # Vite dev server configuration
 ├── models/
-│   ├── saved/              # Tuned model binaries (twitter_xgboost_tuned.pkl, meta_xgboost_tuned.pkl)
-│   └── predict.py          # Dual-platform predictor & SHAP explainability engine
-├── demo_batch.csv          # Sample 10-account mixed dataset for batch testing
-├── render.yaml             # Render service deployment specification
-├── test_payload.json       # API test payload
-├── PROJECT_SUMMARY.md      # Detailed hackathon journey & presentation guide
-└── README.md               # Quick technical overview
+│   ├── saved/                 # Tuned model binaries (twitter_xgboost_tuned.pkl, meta_xgboost_tuned.pkl)
+│   └── predict.py             # Dual-platform predictor & SHAP explainability engine
+├── demo_batch.csv             # Sample 10-account mixed dataset for batch testing
+├── render.yaml                # Render service deployment specification
+├── test_payload.json          # API test payload
+├── PROJECT_SUMMARY.md         # Detailed hackathon journey & presentation guide
+└── README.md                  # Quick technical overview
 ```
 
 ---
@@ -123,6 +127,36 @@ curl -X POST http://localhost:8000/analyze \
     "Suspicious follower-to-following ratio (0.002).",
     "High posting frequency (2500.0 posts per day).",
     "Anomalous metric detected in description_length (0)."
-  ]
+  ],
+  "network_graph": { "nodes": [...], "edges": [...], "density": 0.714, "clique_count": 3 }
 }
 ```
+
+### URL-Based Profile Scan
+```bash
+curl -X POST http://localhost:8000/analyze/url \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://x.com/cybersec_alert_bot"}'
+```
+
+### Export Forensic PDF Report
+```bash
+curl -X POST http://localhost:8000/analyze/report \
+  -H "Content-Type: application/json" \
+  -d '{"username": "cybersec_alert_bot", "features": {...}, "prediction": {...}}' \
+  --output report.pdf
+```
+
+---
+
+## 🧩 Key Features
+
+| Feature | Description |
+| :--- | :--- |
+| **URL Profile Scanner** | Paste any Twitter/X or Instagram/Facebook profile link — the OSINT scraper auto-extracts metadata and runs ML classification. |
+| **Dual-Platform XGBoost** | Separate tuned models for Twitter (13 features, 90% accuracy) and Meta (7 features, 97% accuracy) with SHAP explainability. |
+| **Network Graph Analysis** | NetworkX-powered Degree Centrality and CIB cluster detection visualized as an interactive SVG force-directed graph. |
+| **Forensic PDF Export** | 1-click download of a law-enforcement-grade case file with ITBP/MHA header, SHA256 hash, and Sec. 65B Indian Evidence Act compliance. |
+| **Batch CSV Analysis** | Central agency dashboard for bulk-scanning accounts via CSV upload with color-coded threat results. |
+| **Offline Intel Cache** | Pre-seeded demo profiles ensure the live presentation never fails due to rate limiting. |
+

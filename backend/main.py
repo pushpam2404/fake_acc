@@ -9,8 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 # Append root directory to path to allow importing from the models directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from backend.schemas import AccountFeatures, AnalyzeResponse, BatchRequest
+from backend.schemas import AccountFeatures, AnalyzeResponse, BatchRequest, ReportRequest, UrlRequest
 from models.predict import predict
+from backend.report_generator import build_pdf_report
+from fastapi.responses import StreamingResponse
+
+
 
 app = FastAPI(
     title="SIH1775 Fake Account Detector API",
@@ -40,15 +44,26 @@ def analyze(features: AccountFeatures):
         # Filter out None values so predict auto-calculates missing ratios if needed
         input_dict = {k: v for k, v in features.dict().items() if v is not None}
         platform = input_dict.pop("platform", "auto")
+        username = input_dict.get("username", "suspect_profile")
         
         result = predict(input_dict, platform=platform)
         
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
             
-        return sanitize_result(result)
+        result = sanitize_result(result)
+        
+        # Compute network graph
+        from backend.network_analyser import analyze_profile_network
+        result["network_graph"] = analyze_profile_network(
+            username, 
+            result["platform"], 
+            result["risk_score"]
+        )
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
 
 @app.post("/analyze/batch")
 def analyze_batch(payload: BatchRequest):
@@ -97,6 +112,53 @@ async def analyze_batch_csv(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to process CSV: {str(e)}")
 
+@app.post("/analyze/report")
+def export_report(payload: ReportRequest):
+    try:
+        pdf_bytes = build_pdf_report(payload.username, payload.features, payload.prediction)
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=ITBP_Forensic_Report_{payload.username}.pdf"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
+
+@app.post("/analyze/url")
+def analyze_url(payload: UrlRequest):
+    try:
+        from backend.osint_scraper import scrape_profile_data
+        
+        # Scrape features from URL
+        features = scrape_profile_data(payload.url)
+        username = features.get("username", "unknown_user")
+        platform = features.get("platform", "auto")
+        
+        # Run prediction
+        predict_input = {k: v for k, v in features.items() if k not in ["username", "platform"]}
+        result = predict(predict_input, platform=platform)
+        
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+            
+        result = sanitize_result(result)
+        result["username"] = username
+        result["raw_features"] = features
+        
+        # Add network graph
+        from backend.network_analyser import analyze_profile_network
+        result["network_graph"] = analyze_profile_network(
+            username, 
+            result["platform"], 
+            result["risk_score"]
+        )
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.get("/health")
+
 def health():
+
     return {"status": "ok", "message": "Backend and ML Models are online."}

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { PRESET_ACCOUNTS } from './presets';
-import { analyzeAccount, checkHealth } from './api';
+import { analyzeAccount, checkHealth, analyzeUrl, downloadReport } from './api';
 import { AccountFeatures, AnalyzeResponse } from './types';
 import { BatchView } from './BatchView';
-import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown } from 'lucide-react';
+import { NetworkGraph } from './NetworkGraph';
 import './index.css';
+
+
 
 export default function App() {
   const [platform, setPlatform] = useState<'twitter' | 'meta'>('twitter');
@@ -14,6 +17,9 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [error, setError] = useState<string | null>(null);
+  const [profileUrl, setProfileUrl] = useState<string>('');
+  const [scraping, setScraping] = useState<boolean>(false);
+
 
   // Check backend health on mount
   useEffect(() => {
@@ -79,7 +85,54 @@ export default function App() {
   const handleReset = () => {
     setResult(null);
     setError(null);
+    setProfileUrl('');
   };
+
+  const handleAnalyzeUrl = async () => {
+    if (!profileUrl.trim()) return;
+    setScraping(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const res = await analyzeUrl(profileUrl);
+      setResult(res);
+      if (res.raw_features) {
+        setFormData(res.raw_features);
+        if (res.platform === 'twitter' || res.platform === 'meta') {
+          setPlatform(res.platform as 'twitter' | 'meta');
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(
+        err.response?.data?.detail ||
+          'Failed to scan profile URL. The server may be offline or rate-limited.'
+      );
+    } finally {
+      setScraping(false);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!result) return;
+    try {
+      const username = result.username || formData.username || 'target_profile';
+      const blob = await downloadReport(username, formData, result);
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `ITBP_Forensic_Report_${username}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to export forensic report PDF.');
+    }
+  };
+
 
   return (
     <div className="container">
@@ -101,10 +154,36 @@ export default function App() {
       <div className="dashboard-grid">
         {/* LEFT COLUMN: EDITORIAL FORM & PRESETS */}
         <div className="editorial-panel" style={{ padding: '1.75rem' }}>
+          {/* SECTION 00: PROFILE URL SCAN */}
+          <div className="section-header">
+            <h2 className="section-title">
+              <span className="section-num">01 /</span> Scan Active Profile Link
+            </h2>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.75rem' }}>
+            <input
+              type="text"
+              placeholder="e.g. https://x.com/username or https://instagram.com/username"
+              className="form-input"
+              style={{ flex: 1, margin: 0 }}
+              value={profileUrl}
+              onChange={(e) => setProfileUrl(e.target.value)}
+            />
+            <button
+              className="analyze-btn"
+              style={{ width: 'auto', marginTop: 0, padding: '0 1.25rem', whiteSpace: 'nowrap' }}
+              onClick={handleAnalyzeUrl}
+              disabled={scraping || !profileUrl}
+            >
+              {scraping ? 'Scanning...' : 'Scan URL'}
+            </button>
+          </div>
+
           {/* SECTION 01: PLATFORM SELECTION */}
           <div className="section-header">
             <h2 className="section-title">
-              <span className="section-num">01 /</span> Target Platform Context
+              <span className="section-num">02 /</span> Target Platform Context
             </h2>
           </div>
 
@@ -126,7 +205,7 @@ export default function App() {
           {/* SECTION 02: PRESETS */}
           <div className="section-header">
             <h3 className="section-title">
-              <span className="section-num">02 /</span> Sample Telemetry Profiles
+              <span className="section-num">03 /</span> Sample Telemetry Profiles
             </h3>
           </div>
 
@@ -147,7 +226,7 @@ export default function App() {
           {/* SECTION 03: FORM METRICS */}
           <div className="section-header">
             <h3 className="section-title">
-              <span className="section-num">03 /</span> Account Telemetry Metrics
+              <span className="section-num">04 /</span> Account Telemetry Metrics
             </h3>
           </div>
 
@@ -330,6 +409,34 @@ export default function App() {
                   ))}
                 </ul>
               </div>
+
+              {/* CO-OCCURRENCE NETWORK GRAPH */}
+              {result.network_graph && (
+                <NetworkGraph data={result.network_graph} />
+              )}
+
+              {/* PDF EXPORT BUTTON */}
+
+              <button
+                className="analyze-btn"
+                onClick={handleDownloadReport}
+                style={{
+                  marginTop: '1.75rem',
+                  width: '100%',
+                  background: '#b91c1c',
+                  color: 'white',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  alignItems: 'center',
+                  fontWeight: 600,
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.75rem'
+                }}
+              >
+                <FileDown size={18} /> Export Forensic Case File (PDF)
+              </button>
             </div>
           ) : (
             <div className="empty-state">

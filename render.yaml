@@ -2,8 +2,14 @@ services:
   - type: web
     name: sih1775-backend
     env: python
-    buildCommand: pip install -r backend/requirements.txt && playwright install chromium
+    buildCommand: pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && pip install --no-cache-dir -r backend/requirements.txt && cd frontend && npm install && npm run build
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: TOKENIZERS_PARALLELISM
+        value: "false"
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: PLAYWRIGHT_BROWSERS_PATH
         value: "0"

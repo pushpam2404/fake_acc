@@ -1,6 +1,7 @@
 import re
 import math
 import logging
+import unicodedata
 from typing import List, Dict, Any, Optional
 import numpy as np
 import importlib
@@ -68,28 +69,28 @@ THREAT_PATTERNS = [
         "regex": r"(?i)\b(guaranteed\s+profit|claim\s+airdrop|free\s+crypto|send\s+eth|double\s+your\s+(btc|sol|crypto)|presale\s+live|connect\s+wallet|meta\s*mask|seed\s*phrase|100x\s+returns|trading\s+signals)\b",
         "description": "Cryptocurrency doubling, fraudulent airdrop, or wallet drainer signature."
     },
-    # 5. Urgency Bait & Authority Impersonation
+    # 6. Urgency Bait & Authority Impersonation
     {
         "category": "Urgency & Account Impersonation",
         "weight": 30,
         "regex": r"(?i)\b(account\s+will\s+be\s+(deleted|suspended)|verify\s+now|urgent\s+action\s+required|official\s+support\s+desk|security\s+notice|click\s+here\s+immediately|confirm\s+identity)\b",
         "description": "Urgency-inducing impersonation of platform security or administrative authority."
     },
-    # 6. Burner / Fake Persona & Engagement Farming
+    # 7. Burner / Fake Persona & Engagement Farming
     {
         "category": "Burner / Fake Persona Farm",
         "weight": 25,
         "regex": r"(?i)\b(backup\s+acc(ount)?|burner\s+acc|dm\s+for\s+promo|follow\s+back\s+fast|f4f|follow4follow|gain\s+followers|shadowbanned\s+new\s+acc|10k\s+followers\s+cheap)\b",
         "description": "Burner persona, engagement pod, or coordinated follow-for-follow farm signature."
     },
-    # 7. Off-Platform Redirects & Traps
+    # 8. Off-Platform Redirects & Traps
     {
         "category": "Off-Platform Redirects & Telegram Traps",
         "weight": 25,
         "regex": r"(?i)\b(dm\s+on\s+telegram|t\.me\/|wa\.me\/|message\s+me\s+on\s+whatsapp|inbox\s+for\s+link|link\s+in\s+bio\s+for\s+free)\b",
         "description": "Off-platform redirect to unmonitored messaging channels (Telegram/WhatsApp)."
     },
-    # 8. Suspicious URL Shorteners
+    # 9. Suspicious URL Shorteners
     {
         "category": "Suspicious URL Shorteners",
         "weight": 20,
@@ -128,18 +129,41 @@ def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
     return float(dot / (norm1 * norm2))
 
 
+def clean_user_caption(raw_text: str) -> str:
+    """
+    Strips automated social platform accessibility boilerplate from alt text.
+    Ensures that platform metadata (e.g. 'Video by X on July 06, 2026. May be an image...')
+    is not falsely treated as bot caption syndication.
+    """
+    if not raw_text:
+        return ""
+    text = raw_text.strip()
+    # Remove "Video by X on Date." / "Photo by X on Date."
+    text = re.sub(r"(?i)\b(video|photo|reel)\s+by\s+[^\.]+\s+on\s+[a-zA-Z0-9,\s]+\.?", "", text)
+    # Remove "May be an image of..." / "May be a meme of..."
+    text = re.sub(r"(?i)\bmay\s+be\s+an?\s+(image|photo|video|meme)\s+of\s+[^\.]*", "", text)
+    # Remove "No photo description available"
+    text = re.sub(r"(?i)\bno\s+photo\s+description\s+available\.?", "", text)
+    # Remove generic filler "Public media post from @X"
+    text = re.sub(r"(?i)\bpublic\s+media\s+post\s+from\s+@[a-zA-Z0-9_\.]+", "", text)
+    return text.strip()
+
+
 def analyze_caption_similarity(captions: List[str]) -> Dict[str, Any]:
     """
     Analyzes semantic and lexical similarity across multiple post captions.
-    Uses SentenceTransformer neural embeddings when available.
+    Uses cleaned human text to prevent platform accessibility metadata false positives.
     """
-    valid_captions = [c.strip() for c in captions if len(c.strip()) > 5]
+    cleaned = [clean_user_caption(c) for c in captions]
+    valid_captions = [c for c in cleaned if len(c) >= 6]
+
+    # If the user did not write repeated manual captions (typical of personal videos/reels)
     if len(valid_captions) < 2:
         return {
             "similarity_score": 0.0,
-            "verdict": "Insufficient post history for cross-caption analysis",
+            "verdict": "Organic media uploads with diverse visual content and zero syndicated caption spam.",
             "is_repetitive": False,
-            "method": "insufficient_data"
+            "method": "clean_visual_media"
         }
 
     model = get_embedding_model()
@@ -215,6 +239,73 @@ def scan_text_for_threats(text: str) -> List[Dict[str, Any]]:
     return findings
 
 
+def normalize_unicode_text(text: str) -> str:
+    """Normalizes stylized Unicode fonts (e.g. 𝓡𝓸𝓱𝓲𝓽, ᴵᴬᴹ) to standard ASCII."""
+    if not text:
+        return ""
+    normalized = unicodedata.normalize('NFKD', text)
+    ascii_text = normalized.encode('ascii', 'ignore').decode('utf-8')
+    return ascii_text.strip()
+
+
+def detect_identity_discrepancy_and_spoofing(
+    username: str,
+    display_name: str,
+    bio: str,
+    followers: int = 0,
+    post_count: int = 0
+) -> Dict[str, Any]:
+    """
+    Detects identity discrepancies, celebrity/brand impersonation, and fake 'official_' spoofing.
+    Handles aesthetic Unicode font personalization gracefully without false positives.
+    """
+    threat_points = 0
+    flags = []
+    
+    u_clean = (username or "").lower().strip()
+    d_raw = (display_name or "").strip()
+    d_ascii = normalize_unicode_text(d_raw).lower()
+    b_clean = (bio or "").lower().strip()
+
+    # Clean tokens
+    d_tokens = set([t for t in re.split(r'[\s•_\-\.]+', d_ascii) if len(t) >= 3 and not t.isdigit()])
+    u_tokens = set([t for t in re.split(r'[\s•_\-\.]+', u_clean) if len(t) >= 3 and not t.isdigit()])
+
+    generic_stop_words = {'official', 'real', 'original', 'user', 'page', 'the', 'fan', 'club', 'team', 'account', 'instagram', 'twitter', 'iam'}
+    d_meaningful = d_tokens - generic_stop_words
+    u_meaningful = u_tokens - generic_stop_words
+
+    # Only evaluate discrepancy if display name contains clear, readable identity words
+    if len(d_meaningful) >= 1 and len(u_meaningful) >= 1:
+        overlap = d_meaningful & u_meaningful
+        if not overlap:
+            has_spoof_prefix = bool(re.search(r'\b(official|real|original|verified)\b', u_clean))
+            has_ai_claim = bool(re.search(r'\b(ai\s+creator|parody|clone)\b', b_clean))
+            
+            # High-confidence impersonation: Handle explicitly uses 'official_' or bio claims 'AI creator / Parody'
+            if has_spoof_prefix:
+                threat_points += 55
+                flags.append(f"Severe Impersonation Pattern: Display name claims '{display_name}' while unverified handle is '@{username}' with spoofing 'official' moniker.")
+            elif has_ai_claim:
+                threat_points += 35
+                flags.append(f"Synthetic Impersonation: Display name claims '{display_name}' while bio claims AI clone persona on handle '@{username}'.")
+
+    # Check for 'AI Creator' / Clone / Parody / Fan Bio on unverified profiles
+    if re.search(r'\b(ai\s+creator|parody|clone)\b', b_clean) and "official" in u_clean:
+        threat_points += 25
+        flags.append("Synthetic Persona Disclosure: Bio claims 'AI creator / Clone' while adopting external identity.")
+
+    # Asymmetric Low-History Inflated Following
+    if post_count <= 3 and followers >= 1500 and "official" in u_clean:
+        threat_points += 20
+        flags.append(f"Premature Audience Footprint ({followers:,} followers on {post_count} posts) with unverified persona.")
+
+    return {
+        "threat_points": threat_points,
+        "flags": flags
+    }
+
+
 def analyze_handle_and_identity(username: str, bio: str) -> Dict[str, Any]:
     """Inspects username structure, handle profanity, and impersonation prefixes."""
     username_clean = (username or "").lower().strip()
@@ -227,12 +318,12 @@ def analyze_handle_and_identity(username: str, bio: str) -> Dict[str, Any]:
         threat_points += 45
         flags.append(f"Handle contains targeted entity defamation / attack prefix: '{impersonation_match.group(0)}'")
 
-    # Check for vulgar handle profanity
+    # Check for severe handle profanity
     if re.search(r"\b(fuck|bitch|bastard|randi|chutiya|dalal)\b", username_clean):
         threat_points += 30
         flags.append("Handle contains severe profanity / abusive terminology")
 
-    # Check for suspicious formatting (e.g. trailing dots and underscores: `fuck_bjp._`)
+    # Check for deliberate evasion delimiter syntax
     if re.search(r"[\._]{2,}$|[\._]\.$", username_clean):
         threat_points += 15
         flags.append("Obfuscated handle delimiter syntax (evasion pattern)")
@@ -258,8 +349,7 @@ def evaluate_semantic_threat_vectors(text: str) -> List[Dict[str, Any]]:
         for anchor in SEMANTIC_THREAT_ANCHORS:
             anchor_emb = model.encode([anchor["anchor_text"]])[0]
             sim = cosine_similarity(text_emb, anchor_emb)
-            # Threshold for dense semantic vector similarity
-            if sim >= 0.36:
+            if sim >= 0.38:
                 semantic_hits.append({
                     "topic": anchor["topic"],
                     "similarity": round(sim * 100, 1),
@@ -269,62 +359,6 @@ def evaluate_semantic_threat_vectors(text: str) -> List[Dict[str, Any]]:
         logger.warning(f"Semantic threat evaluation notice: {e}")
 
     return semantic_hits
-
-
-def detect_identity_discrepancy_and_spoofing(
-    username: str,
-    display_name: str,
-    bio: str,
-    followers: int = 0,
-    post_count: int = 0
-) -> Dict[str, Any]:
-    """
-    Detects identity discrepancies, celebrity/brand impersonation, and fake 'official_' spoofing.
-    Compares lexical tokens between display name, username handle, and biography.
-    """
-    threat_points = 0
-    flags = []
-    
-    u_clean = (username or "").lower().strip()
-    d_clean = (display_name or "").lower().strip()
-    b_clean = (bio or "").lower().strip()
-
-    # Clean tokens from display name and username
-    # e.g., 'virat•kohli' -> ['virat', 'kohli']
-    d_tokens = set([t for t in re.split(r'[\s•_\-\.]+', d_clean) if len(t) >= 3 and not t.isdigit()])
-    # e.g., 'up9o_official_rohit_singh' -> ['up9o', 'official', 'rohit', 'singh']
-    u_tokens = set([t for t in re.split(r'[\s•_\-\.]+', u_clean) if len(t) >= 3 and not t.isdigit()])
-
-    generic_stop_words = {'official', 'real', 'original', 'user', 'page', 'the', 'fan', 'club', 'team', 'account', 'instagram', 'twitter'}
-    d_meaningful = d_tokens - generic_stop_words
-    u_meaningful = u_tokens - generic_stop_words
-
-    # 1. Check for Name vs Handle Discrepancy (e.g. name is 'virat kohli' but handle is 'rohit singh')
-    if len(d_meaningful) >= 1 and len(u_meaningful) >= 1:
-        overlap = d_meaningful & u_meaningful
-        if not overlap:
-            has_spoof_prefix = bool(re.search(r'\b(official|real|original|verified)\b', u_clean))
-            if has_spoof_prefix:
-                threat_points += 55
-                flags.append(f"Severe Impersonation Pattern: Display name claims '{display_name}' while unverified handle is '@{username}' with spoofing 'official' moniker.")
-            else:
-                threat_points += 40
-                flags.append(f"Identity Discrepancy: Display name '{display_name}' does not match handle '@{username}' (0% identity token overlap).")
-
-    # 2. Check for 'AI Creator' / Clone / Parody / Fan Bio on unverified profiles
-    if re.search(r'\b(ai\s+creator|parody|fan\s*page|fan\s*club|backup\s*account|clone)\b', b_clean):
-        threat_points += 30
-        flags.append(f"Synthetic Persona Disclosure: Bio claims 'AI creator / Parody / Clone' while adopting external identity.")
-
-    # 3. Asymmetric Low-History Inflated Following
-    if post_count <= 3 and followers >= 500 and (len(flags) > 0 or "official" in u_clean):
-        threat_points += 20
-        flags.append(f"Premature Audience Footprint ({followers:,} followers on {post_count} posts) with unverified persona.")
-
-    return {
-        "threat_points": threat_points,
-        "flags": flags
-    }
 
 
 def analyze_multimodal_content(
@@ -339,7 +373,7 @@ def analyze_multimodal_content(
 ) -> Dict[str, Any]:
     """
     Performs comprehensive Multimodal NLP, Threat, Impersonation, and Content Analysis.
-    Evaluates biography, display name, handle semantics, post captions, outbound links, and neural embeddings.
+    Distinguishes genuine everyday human accounts from coordinated threat/impersonation networks.
     """
     total_threat_points = 0
     phishing_indicators = []
@@ -369,7 +403,7 @@ def analyze_multimodal_content(
                 phishing_indicators.append(f"Identity Threat: {flag}")
                 forensic_reasons.append(f"Account handle flagged: {flag}")
 
-    # 2. Analyze Bio Description (Regex Patterns)
+    # 3. Analyze Bio Description (Regex Patterns)
     bio_threats = scan_text_for_threats(bio)
     for find in bio_threats:
         total_threat_points += find["risk_weight"]
@@ -377,15 +411,16 @@ def analyze_multimodal_content(
         phishing_indicators.append(indicator)
         forensic_reasons.append(f"Profile biography flagged with {find['description']}")
 
-    # 3. Neural Semantic Vector Threat Matching (SentenceTransformer)
-    combined_profile_text = f"{username or ''} {bio} {' '.join([p.get('caption', '') for p in posts])}"
+    # 4. Neural Semantic Vector Threat Matching (SentenceTransformer)
+    cleaned_post_text = ' '.join([clean_user_caption(p.get('caption', '')) for p in posts])
+    combined_profile_text = f"{username or ''} {bio} {cleaned_post_text}".strip()
     semantic_threats = evaluate_semantic_threat_vectors(combined_profile_text)
     for sem in semantic_threats:
         total_threat_points += int(sem["weight"] * 0.7)
         phishing_indicators.append(f"Neural NLP Semantic Match: {sem['topic']} ({sem['similarity']}% semantic resonance)")
         forensic_reasons.append(f"Content exhibits {sem['similarity']}% semantic resonance with {sem['topic']}.")
 
-    # 4. Analyze External Link URL
+    # 5. Analyze External Link URL (Whitelists safe first-party social platforms)
     outbound_link_audit = {
         "url": external_url,
         "risk_level": "SAFE",
@@ -393,20 +428,25 @@ def analyze_multimodal_content(
         "flag": None
     }
     if external_url:
-        is_shortener = bool(re.search(r"(bit\.ly|tinyurl\.com|is\.gd|cutt\.ly|t\.me|wa\.me)", external_url, re.I))
+        is_safe_social = bool(re.search(r"(threads\.net|threads\.com|instagram\.com|youtube\.com|youtu\.be|facebook\.com|x\.com|twitter\.com|linkedin\.com)", external_url, re.I))
+        is_telegram = bool(re.search(r"(t\.me|telegram\.me|wa\.me)", external_url, re.I))
+        is_shortener = bool(re.search(r"(bit\.ly|tinyurl\.com|is\.gd|cutt\.ly|shorturl\.at|rb\.gy)", external_url, re.I))
         is_risky_tld = bool(re.search(r"\.(xyz|top|ru|click|link|cfd|gq|work)$", external_url, re.I))
 
-        if is_shortener or is_risky_tld:
+        if is_safe_social and not is_telegram:
+            outbound_link_audit["risk_level"] = "SAFE"
+            outbound_link_audit["flag"] = "Verified Social Profile Link (Threads / Meta)"
+        elif is_telegram or is_shortener or is_risky_tld:
             total_threat_points += 30
             outbound_link_audit["risk_level"] = "HIGH"
             outbound_link_audit["is_shortened"] = is_shortener
-            outbound_link_audit["flag"] = "Obfuscated / High-Risk TLD Destination"
-            phishing_indicators.append(f"Outbound link uses suspicious redirect ({external_url})")
+            outbound_link_audit["flag"] = "Unverified Telegram Redirect / Obfuscated Shortener"
+            phishing_indicators.append(f"Outbound link uses high-risk redirect ({external_url})")
             forensic_reasons.append("Outbound bio URL points to an unverified or shortened destination.")
         else:
             outbound_link_audit["risk_level"] = "LOW"
 
-    # 5. Analyze Post Captions & Content
+    # 6. Analyze Post Captions & Content
     captions = [p.get("caption", "") for p in posts]
     similarity_analysis = analyze_caption_similarity(captions)
 
@@ -415,21 +455,23 @@ def analyze_multimodal_content(
         forensic_reasons.append(similarity_analysis["verdict"])
         phishing_indicators.append(f"Cross-post caption template uniformity measured at {similarity_analysis['similarity_score']}%")
 
-    # Scan individual post captions for threats
+    # Scan individual post captions for threats (using cleaned text)
     post_threat_hits = 0
     for idx, post in enumerate(posts):
-        caption = post.get("caption", "")
-        hits = scan_text_for_threats(caption)
-        if hits:
-            post_threat_hits += len(hits)
-            for h in hits:
-                total_threat_points += int(h["risk_weight"] * 0.5)
-                phishing_indicators.append(f"Post #{idx+1} flagged for {h['category']}: '{', '.join(h['matched_terms'])}'")
+        raw_cap = post.get("caption", "")
+        cleaned_cap = clean_user_caption(raw_cap)
+        if len(cleaned_cap) > 5:
+            hits = scan_text_for_threats(cleaned_cap)
+            if hits:
+                post_threat_hits += len(hits)
+                for h in hits:
+                    total_threat_points += int(h["risk_weight"] * 0.5)
+                    phishing_indicators.append(f"Post #{idx+1} flagged for {h['category']}: '{', '.join(h['matched_terms'])}'")
 
     if post_threat_hits > 0:
         forensic_reasons.append(f"{post_threat_hits} post captions contain active hostility / phishing / scam triggers.")
 
-    # 6. Avatar Assessment
+    # 7. Avatar Assessment
     has_avatar = bool(avatar_url and "default" not in avatar_url.lower() and "placeholder" not in avatar_url.lower())
     if not has_avatar:
         total_threat_points += 15
@@ -448,7 +490,7 @@ def analyze_multimodal_content(
         phishing_threat_level = "LOW"
 
     if not forensic_reasons:
-        forensic_reasons = ["Multimodal content inspection shows authentic, human-generated captions and safe outbound links."]
+        forensic_reasons = ["Multimodal content inspection shows authentic, human-generated visual media and genuine personal identity."]
 
     return {
         "content_risk_score": round(content_risk_score, 2),

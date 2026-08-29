@@ -117,23 +117,34 @@ def preprocess_features(df_input: pd.DataFrame, platform: str) -> pd.DataFrame:
     return df_input
 
 
-def translate_shap_to_english(feature_name: str, feature_value, shap_value, is_fake: bool = True) -> str:
+def translate_shap_to_english(
+    feature_name: str, 
+    feature_value, 
+    shap_value, 
+    is_fake: bool = True,
+    all_features: Optional[dict] = None
+) -> str:
     """
     Translates mathematical SHAP values into rich, context-aware forensic explanations.
-    Uses value thresholds, direction, and magnitude to generate nuanced plain-English descriptions.
+    Uses value thresholds, direction, magnitude, and context to generate nuanced descriptions.
     """
     fval = float(feature_value)
     val = round(fval, 2)
     int_val = int(fval) if fval.is_integer() or abs(fval - round(fval)) < 1e-4 else val
 
+    feats = all_features or {}
+    total_followers = int(float(feats.get('followers', 0)))
+    total_following = int(float(feats.get('following', 0)))
     
     # 1. Negative SHAP impact (evidence supporting AUTHENTIC HUMAN behavior)
     if not is_fake or shap_value < 0:
         if feature_name == 'follower_following_ratio':
-            if val >= 1000.0:
-                return f"High-authority global figure ratio ({val:,.0f}x audience reach over following)."
-            elif val >= 10.0:
-                return f"Strong creator/influencer audience ratio ({val}x), reflecting organic audience asymmetry."
+            if total_followers >= 500000 and val >= 50.0:
+                return f"High-authority public figure footprint ({total_followers:,} followers over {total_following} following)."
+            elif total_followers >= 5000 and val >= 5.0:
+                return f"Creator/public audience distribution ({total_followers:,} followers with {val}x organic reach)."
+            elif total_followers < 5000 and val >= 3.0:
+                return f"Selective personal social circle ({total_followers:,} followers vs {total_following} following)."
             elif val >= 0.3:
                 return f"Balanced peer-to-peer reciprocal ratio ({val}), typical of genuine personal human social circles."
             else:
@@ -305,7 +316,8 @@ def predict(features_dict: dict, platform: str = "auto") -> dict:
                             impact['feature'], 
                             impact['original_value'], 
                             impact['shap_value'],
-                            is_fake=True
+                            is_fake=True,
+                            all_features=features_dict
                         )
                         reasons.append(english_reason)
             else:
@@ -317,7 +329,8 @@ def predict(features_dict: dict, platform: str = "auto") -> dict:
                             impact['feature'], 
                             impact['original_value'], 
                             impact['shap_value'],
-                            is_fake=False
+                            is_fake=False,
+                            all_features=features_dict
                         )
                         reasons.append(english_reason)
 

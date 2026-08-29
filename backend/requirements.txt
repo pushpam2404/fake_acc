@@ -11,7 +11,5 @@ fpdf2
 networkx
 instaloader
 playwright
-sentence-transformers
-torch
 imagehash
 sqlalchemy

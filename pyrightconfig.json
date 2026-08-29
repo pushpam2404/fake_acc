@@ -1,0 +1,13 @@
+{
+  "venvPath": "/Users/pushpam/Desktop/fake-account-detection",
+  "venv": ".venv",
+  "extraPaths": [
+    "/Users/pushpam/Desktop/fake-account-detection",
+    "/Users/pushpam/Desktop/fake-account-detection/backend",
+    "/Users/pushpam/Desktop/fake-account-detection/models"
+  ],
+  "pythonVersion": "3.14",
+  "pythonPlatform": "Darwin",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": false
+}

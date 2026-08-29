@@ -4,28 +4,11 @@ import logging
 import unicodedata
 from typing import List, Dict, Any, Optional
 import numpy as np
-import importlib
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ContentAnalyser")
-
-# Lazy-load sentence transformer to ensure fast server startup
-_embedding_model = None
-
-def get_embedding_model():
-    global _embedding_model
-    if _embedding_model is None:
-        try:
-            logger.info("Initializing SentenceTransformer neural model (all-MiniLM-L6-v2)...")
-            st_module = importlib.import_module("sentence_transformers")
-            SentenceTransformer = getattr(st_module, "SentenceTransformer")
-            _embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-            logger.info("SentenceTransformer model loaded successfully.")
-        except Exception as e:
-            logger.warning(f"SentenceTransformer fallback: {e}")
-            _embedding_model = False
-    return _embedding_model
 
 
 # ==============================================================================
@@ -166,58 +149,56 @@ def analyze_caption_similarity(captions: List[str]) -> Dict[str, Any]:
             "method": "clean_visual_media"
         }
 
-    model = get_embedding_model()
+    try:
+        vec = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", min_df=1)
+        tfidf_matrix = vec.fit_transform(valid_captions).toarray()
 
-    if model:
-        try:
-            embeddings = model.encode(valid_captions)
-            similarities = []
-            for i in range(len(embeddings)):
-                for j in range(i + 1, len(embeddings)):
-                    sim = cosine_similarity(embeddings[i], embeddings[j])
-                    similarities.append(max(0.0, sim))
+        similarities = []
+        for i in range(len(tfidf_matrix)):
+            for j in range(i + 1, len(tfidf_matrix)):
+                sim = cosine_similarity(tfidf_matrix[i], tfidf_matrix[j])
+                similarities.append(max(0.0, float(sim)))
 
-            avg_similarity = float(np.mean(similarities)) if similarities else 0.0
-            similarity_pct = round(avg_similarity * 100, 1)
+        avg_similarity = float(np.mean(similarities)) if similarities else 0.0
+        similarity_pct = round(avg_similarity * 100, 1)
 
-            if similarity_pct >= 80.0:
-                verdict = f"Critical Template Repetition ({similarity_pct}%) — Captions are near-identical automated syndication."
-                is_repetitive = True
-            elif similarity_pct >= 60.0:
-                verdict = f"Elevated Uniformity ({similarity_pct}%) — High structural overlap across published captions."
-                is_repetitive = True
-            else:
-                verdict = f"Organic Diversity ({similarity_pct}%) — Distinct human phrasing across posts."
-                is_repetitive = False
+        if similarity_pct >= 70.0:
+            verdict = f"Critical Template Repetition ({similarity_pct}%) — Captions are near-identical automated syndication."
+            is_repetitive = True
+        elif similarity_pct >= 45.0:
+            verdict = f"Elevated Uniformity ({similarity_pct}%) — High structural overlap across published captions."
+            is_repetitive = True
+        else:
+            verdict = f"Organic Diversity ({similarity_pct}%) — Distinct human phrasing across posts."
+            is_repetitive = False
 
-            return {
-                "similarity_score": similarity_pct,
-                "verdict": verdict,
-                "is_repetitive": is_repetitive,
-                "method": "SentenceTransformer (all-MiniLM-L6-v2)"
-            }
-        except Exception as e:
-            logger.warning(f"Neural embedding failed, falling back to Jaccard: {e}")
+        return {
+            "similarity_score": similarity_pct,
+            "verdict": verdict,
+            "is_repetitive": is_repetitive,
+            "method": "TF-IDF N-Gram Vectorizer (Scikit-Learn Lightweight)"
+        }
+    except Exception as e:
+        logger.warning(f"TF-IDF similarity calculation fallback: {e}")
+        # Fallback Jaccard
+        jaccard_scores = []
+        token_sets = [set(re.findall(r'\w+', c.lower())) for c in valid_captions]
+        for i in range(len(token_sets)):
+            for j in range(i + 1, len(token_sets)):
+                s1, s2 = token_sets[i], token_sets[j]
+                union = len(s1 | s2)
+                if union > 0:
+                    jaccard_scores.append(len(s1 & s2) / union)
 
-    # Fallback Jaccard
-    jaccard_scores = []
-    token_sets = [set(re.findall(r'\w+', c.lower())) for c in valid_captions]
-    for i in range(len(token_sets)):
-        for j in range(i + 1, len(token_sets)):
-            s1, s2 = token_sets[i], token_sets[j]
-            union = len(s1 | s2)
-            if union > 0:
-                jaccard_scores.append(len(s1 & s2) / union)
+        avg_jaccard = float(np.mean(jaccard_scores)) if jaccard_scores else 0.0
+        similarity_pct = round(avg_jaccard * 100, 1)
 
-    avg_jaccard = float(np.mean(jaccard_scores)) if jaccard_scores else 0.0
-    similarity_pct = round(avg_jaccard * 100, 1)
-
-    return {
-        "similarity_score": similarity_pct,
-        "verdict": f"Lexical Similarity ({similarity_pct}%)" if similarity_pct < 60 else f"High Lexical Repetition ({similarity_pct}%)",
-        "is_repetitive": similarity_pct >= 60,
-        "method": "Jaccard Token Metric"
-    }
+        return {
+            "similarity_score": similarity_pct,
+            "verdict": f"Lexical Similarity ({similarity_pct}%)" if similarity_pct < 50 else f"High Lexical Repetition ({similarity_pct}%)",
+            "is_repetitive": similarity_pct >= 50,
+            "method": "Jaccard Token Metric"
+        }
 
 
 def scan_text_for_threats(text: str) -> List[Dict[str, Any]]:
@@ -335,21 +316,17 @@ def analyze_handle_and_identity(username: str, bio: str) -> Dict[str, Any]:
 
 
 def evaluate_semantic_threat_vectors(text: str) -> List[Dict[str, Any]]:
-    """Evaluates semantic similarity between profile text and canonical threat concepts."""
+    """Evaluates semantic & lexical similarity between profile text and canonical threat concepts using TF-IDF."""
     if not text or len(text.strip()) < 10:
-        return []
-
-    model = get_embedding_model()
-    if not model:
         return []
 
     semantic_hits = []
     try:
-        text_emb = model.encode([text])[0]
         for anchor in SEMANTIC_THREAT_ANCHORS:
-            anchor_emb = model.encode([anchor["anchor_text"]])[0]
-            sim = cosine_similarity(text_emb, anchor_emb)
-            if sim >= 0.38:
+            vec = TfidfVectorizer(ngram_range=(1, 2))
+            tfidf = vec.fit_transform([text, anchor["anchor_text"]]).toarray()
+            sim = cosine_similarity(tfidf[0], tfidf[1])
+            if sim >= 0.22:
                 semantic_hits.append({
                     "topic": anchor["topic"],
                     "similarity": round(sim * 100, 1),

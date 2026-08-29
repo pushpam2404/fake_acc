@@ -6,6 +6,7 @@ import numpy as np
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Append root directory to path to allow importing from the models directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -414,3 +415,9 @@ def session_import(payload: SessionImportRequest):
 @app.get("/health")
 def health():
     return {"status": "ok", "message": "Backend, ML Models, and Playwright Multimodal Engine are online."}
+
+
+# Mount built React frontend if dist directory exists
+FRONTEND_DIST_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist'))
+if os.path.exists(FRONTEND_DIST_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")

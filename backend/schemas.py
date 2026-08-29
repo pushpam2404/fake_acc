@@ -5,6 +5,10 @@ from datetime import datetime
 class SessionCaptureRequest(BaseModel):
     platform: Literal["twitter", "instagram", "facebook"]
 
+class SessionImportRequest(BaseModel):
+    platform: Literal["twitter", "instagram", "facebook"]
+    data: Any
+
 class PlatformSessionInfo(BaseModel):
     connected: bool
     captured_at: Optional[str] = None

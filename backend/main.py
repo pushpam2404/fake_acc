@@ -12,11 +12,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from backend.schemas import (
     AccountFeatures, AnalyzeResponse, BatchRequest, ReportRequest, UrlRequest,
-    SessionCaptureRequest, SessionStatusResponse, PlatformSessionInfo,
+    SessionCaptureRequest, SessionImportRequest, SessionStatusResponse, PlatformSessionInfo,
 )
 from models.predict import predict
 from backend.report_generator import build_pdf_report
-from backend.session_manager import get_all_session_status, save_session, revoke_session
+from backend.session_manager import get_all_session_status, save_session, revoke_session, parse_and_import_session
 from fastapi.responses import StreamingResponse
 from backend.cases import router as cases_router, create_tables
 from backend.seed_cases import seed_cases
@@ -393,6 +393,22 @@ def session_revoke(payload: SessionCaptureRequest):
         "platform": payload.platform,
         "message": f"Session for {payload.platform} {'deleted' if deleted else 'was not found'}."
     }
+
+
+@app.post("/session/import")
+def session_import(payload: SessionImportRequest):
+    """
+    Directly imports session cookies, storageState JSON, or a raw session token.
+    Allows authenticating cloud-hosted backend instances (e.g. Render) where
+    interactive GUI pop-up windows cannot be opened.
+    """
+    try:
+        res = parse_and_import_session(payload.platform, payload.data)
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to import session: {str(e)}")
 
 
 @app.get("/health")

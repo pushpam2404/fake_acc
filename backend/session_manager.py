@@ -139,3 +139,102 @@ def extract_instagram_session_id(platform: str = "instagram") -> Optional[str]:
     except Exception as e:
         logger.warning(f"Could not extract Instagram sessionid: {e}")
     return None
+
+
+def parse_and_import_session(platform: str, data: Any) -> Dict[str, Any]:
+    """
+    Accepts:
+      1. A full Playwright storageState dict: {"cookies": [...], "origins": [...]}
+      2. A list of cookies: [{"name": "...", "value": "..."}, ...]
+      3. A single string token: e.g. "auth_token_value" or "sessionid_value"
+      4. A raw cookie string: "auth_token=xyz; ct0=abc"
+    Normalizes it into a valid Playwright storageState format and saves it.
+    """
+    _ensure_sessions_dir()
+
+    storage_state: Dict[str, Any] = {"cookies": [], "origins": []}
+
+    domain_map = {
+        "twitter": ".x.com",
+        "instagram": ".instagram.com",
+        "facebook": ".facebook.com",
+    }
+    token_name_map = {
+        "twitter": "auth_token",
+        "instagram": "sessionid",
+        "facebook": "c_user",
+    }
+    target_domain = domain_map.get(platform, f".{platform}.com")
+
+    if isinstance(data, dict) and "cookies" in data:
+        storage_state = data
+    elif isinstance(data, list):
+        # Normalize list of cookie objects
+        cookies = []
+        for item in data:
+            if isinstance(item, dict) and "name" in item and "value" in item:
+                cookies.append({
+                    "name": str(item["name"]),
+                    "value": str(item["value"]),
+                    "domain": item.get("domain", target_domain),
+                    "path": item.get("path", "/"),
+                    "httpOnly": item.get("httpOnly", True),
+                    "secure": item.get("secure", True),
+                    "sameSite": item.get("sameSite", "Lax"),
+                })
+        storage_state = {"cookies": cookies, "origins": []}
+    elif isinstance(data, str):
+        text = data.strip()
+        # Check if text is JSON string
+        if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+            try:
+                parsed = json.loads(text)
+                return parse_and_import_session(platform, parsed)
+            except Exception:
+                pass
+
+        cookies = []
+        if "=" in text:
+            # Semicolon-separated cookies: "cookie1=val1; cookie2=val2"
+            parts = [p.strip() for p in text.split(";") if p.strip()]
+            for part in parts:
+                if "=" in part:
+                    k, v = part.split("=", 1)
+                    cookies.append({
+                        "name": k.strip(),
+                        "value": v.strip(),
+                        "domain": target_domain,
+                        "path": "/",
+                        "httpOnly": True,
+                        "secure": True,
+                        "sameSite": "Lax",
+                    })
+        else:
+            # Single raw token string
+            token_name = token_name_map.get(platform, "session")
+            cookies.append({
+                "name": token_name,
+                "value": text,
+                "domain": target_domain,
+                "path": "/",
+                "httpOnly": True,
+                "secure": True,
+                "sameSite": "Lax",
+            })
+        storage_state = {"cookies": cookies, "origins": []}
+    else:
+        raise ValueError("Unsupported session format. Provide storageState JSON, cookie array, or session token.")
+
+    cookie_count = len(storage_state.get("cookies", []))
+    if cookie_count == 0:
+        raise ValueError("No valid cookies found in provided data.")
+
+    path = save_session(platform, storage_state)
+    return {
+        "status": "imported",
+        "platform": platform,
+        "cookies_saved": cookie_count,
+        "session_path": path,
+        "message": f"Successfully imported session for {platform} ({cookie_count} cookies saved).",
+    }
+

@@ -69,6 +69,15 @@ export async function revokeSession(
   return res.data;
 }
 
+export async function importSession(
+  platform: "twitter" | "instagram" | "facebook",
+  data: any
+): Promise<{ status: string; platform: string; cookies_saved: number; message: string }> {
+  const res = await api.post("/session/import", { platform, data });
+  return res.data;
+}
+
+
 // ── Case Management (Escalation Module) ─────────────────────────────────────
 
 export async function getCases(): Promise<Case[]> {

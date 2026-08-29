@@ -197,18 +197,24 @@ interface SessionManagerProps {
   onSessionChange?: () => void;
 }
 
+const emptyStatus: SessionStatus = {
+  twitter: { connected: false, captured_at: null, cookies_count: 0 },
+  instagram: { connected: false, captured_at: null, cookies_count: 0 },
+  facebook: { connected: false, captured_at: null, cookies_count: 0 },
+};
+
 export function SessionManager({ onSessionChange }: SessionManagerProps) {
-  const [status, setStatus] = useState<SessionStatus | null>(null);
+  const [status, setStatus] = useState<SessionStatus>(emptyStatus);
   const [capturingPlatform, setCapturingPlatform] = useState<Platform | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const loadStatus = useCallback(async () => {
     try {
       const s = await getSessionStatus();
-      setStatus(s);
+      if (s) setStatus(s);
     } catch {
-      // Backend may not be ready yet
+      // Backend may be offline or unreachable on remote hosting
     } finally {
       setLoading(false);
     }
@@ -245,13 +251,7 @@ export function SessionManager({ onSessionChange }: SessionManagerProps) {
     }
   };
 
-  const emptyStatus: SessionStatus = {
-    twitter: { connected: false, captured_at: null, cookies_count: 0 },
-    instagram: { connected: false, captured_at: null, cookies_count: 0 },
-    facebook: { connected: false, captured_at: null, cookies_count: 0 },
-  };
-
-  const displayStatus = status ?? emptyStatus;
+  const displayStatus = status;
 
   return (
     <div style={{ maxWidth: '680px', margin: '0 auto' }}>

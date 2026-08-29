@@ -35,14 +35,14 @@ export async function downloadReport(
 }
 
 export async function checkHealth(): Promise<{ status: string; message: string }> {
-  const res = await api.get<{ status: string; message: string }>("/health");
+  const res = await api.get<{ status: string; message: string }>("/health", { timeout: 4000 });
   return res.data;
 }
 
 // ── Session Management ──────────────────────────────────────────────────────
 
 export async function getSessionStatus(): Promise<SessionStatus> {
-  const res = await api.get<SessionStatus>("/session/status");
+  const res = await api.get<SessionStatus>("/session/status", { timeout: 4000 });
   return res.data;
 }
 

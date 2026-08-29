@@ -129,8 +129,17 @@ def translate_shap_to_english(feature_name: str, feature_value, shap_value, is_f
     
     # 1. Negative SHAP impact (evidence supporting AUTHENTIC HUMAN behavior)
     if not is_fake or shap_value < 0:
+        if feature_name == 'follower_following_ratio':
+            if val >= 1000.0:
+                return f"High-authority global figure ratio ({val:,.0f}x audience reach over following)."
+            elif val >= 10.0:
+                return f"Strong creator/influencer audience ratio ({val}x), reflecting organic audience asymmetry."
+            elif val >= 0.3:
+                return f"Balanced peer-to-peer reciprocal ratio ({val}), typical of genuine personal human social circles."
+            else:
+                return f"Moderate reciprocal follower ratio ({val}) within acceptable baseline human thresholds."
+
         human_translations = {
-            'follower_following_ratio': f"Healthy, balanced follower-to-following ratio ({val}) within normal human social distribution.",
             'posts_per_day': f"Organic posting tempo ({val} posts/day), consistent with natural human usage patterns.",
             'account_age_days': f"Established account tenure ({int_val} days), showing an authentic long-term activity history.",
             'reputation_score': f"Strong network reputation index ({val}), indicating reciprocated follower trust.",
@@ -143,7 +152,7 @@ def translate_shap_to_english(feature_name: str, feature_value, shap_value, is_f
             'bio_length': f"Well-developed profile biography ({int_val} characters) demonstrating genuine self-expression.",
             'post_count': f"Consistent and natural posting activity ({int_val} total posts).",
             'following': f"Normal following volume ({int_val} accounts), avoiding aggressive follow-for-follow patterns.",
-            'followers': f"Established follower audience ({int_val} followers) consistent with organic engagement."
+            'followers': f"Established follower audience ({int_val:,} followers) consistent with organic engagement."
         }
         return human_translations.get(feature_name, f"Metric '{feature_name}' ({val}) conforms to genuine user benchmarks.")
 

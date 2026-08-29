@@ -179,13 +179,24 @@ async def analyze_url(payload: UrlRequest):
             bio=bio_text,
             external_url=external_url,
             posts=posts,
-            avatar_url=avatar_url
+            avatar_url=avatar_url,
+            username=username,
+            display_name=playwright_data.get("display_name"),
+            followers=features.get("followers", 0),
+            post_count=features.get("post_count", 0)
         )
 
         # 5. Compute Unified Multimodal Intelligence Risk Score (60% Tabular ML + 40% Multimodal NLP/Threat)
         tabular_score = result["risk_score"]
         content_score = content_analysis["content_risk_score"]
-        unified_risk = round((tabular_score * 0.60) + (content_score * 0.40), 2)
+        
+        # If content threat is critical/elevated, weight content threat strongly
+        if content_score >= 60:
+            unified_risk = round(max(tabular_score, (tabular_score * 0.40) + (content_score * 0.60)), 2)
+        elif content_score >= 35:
+            unified_risk = round((tabular_score * 0.50) + (content_score * 0.50), 2)
+        else:
+            unified_risk = round((tabular_score * 0.70) + (content_score * 0.30), 2)
 
         result["content_analysis"] = content_analysis
         result["posts"] = posts
@@ -193,11 +204,18 @@ async def analyze_url(payload: UrlRequest):
         result["bio"] = bio_text
         result["external_url"] = external_url
         result["multimodal_risk_score"] = unified_risk
+        result["risk_score"] = unified_risk
 
-        # If multimodal content shows critical phishing, elevate classification if needed
-        if content_analysis["phishing_threat_level"] in ["CRITICAL", "HIGH"] and result["classification"] == "REAL":
+        # Adjust classification according to fused multimodal risk
+        if unified_risk >= 65.0:
+            result["classification"] = "FAKE"
+        elif unified_risk >= 35.0:
             result["classification"] = "SUSPICIOUS"
-            result["reasons"].insert(0, f"Multimodal Phishing Alert: {content_analysis['forensic_reasons'][0]}")
+
+        # Prepend content/threat forensic reasons if any threats detected
+        for forensic in reversed(content_analysis.get("forensic_reasons", [])):
+            if "authentic" not in forensic.lower() and forensic not in result["reasons"]:
+                result["reasons"].insert(0, f"Threat Forensics: {forensic}")
 
         # 6. Add Coordinated Network Graph
         result["network_graph"] = analyze_profile_network(

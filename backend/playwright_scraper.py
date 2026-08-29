@@ -86,8 +86,96 @@ PRESET_MEDIA_FIXTURES = {
     },
 
     # --- INSTAGRAM TARGETS ---
+    "stockstrading0": {
+        "platform": "meta",
+        "display_name": "Stocks Trading",
+        "bio": "Education • AI creator • Intraday Calls & F&O Trading / Beginners guide to a Stock Market • Full Time Trader • YouTube & Free Telegram",
+        "external_url": "https://t.me/stockmarketindia2021",
+        "avatar_url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=150&auto=format&fit=crop&q=80",
+        "followers": 1011,
+        "following": 203,
+        "post_count": 420,
+        "has_profile_pic": 1,
+        "posts": [
+            {
+                "id": "st_1",
+                "thumbnail_url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&auto=format&fit=crop&q=80",
+                "caption": "120 DAYS FREE DEMO CALLS - NIFTY & BANKNIFTY INTRADAY CALLS. Join Free Telegram t.me/stockmarketindia2021",
+                "likes": 14,
+                "comments": 0,
+                "timestamp": "27 Aug 2026"
+            },
+            {
+                "id": "st_2",
+                "thumbnail_url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&auto=format&fit=crop&q=80",
+                "caption": "120 DAYS FREE DEMO CALLS - NIFTY & BANKNIFTY INTRADAY CALLS. Guaranteed jackpot profit t.me/stockmarketindia2021",
+                "likes": 18,
+                "comments": 1,
+                "timestamp": "21 Aug 2026"
+            },
+            {
+                "id": "st_3",
+                "thumbnail_url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&auto=format&fit=crop&q=80",
+                "caption": "120 DAYS FREE DEMO CALLS - NIFTY & BANKNIFTY INTRADAY CALLS. Best Intraday stock for tomorrow join telegram",
+                "likes": 11,
+                "comments": 0,
+                "timestamp": "20 Aug 2026"
+            },
+            {
+                "id": "st_4",
+                "thumbnail_url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&auto=format&fit=crop&q=80",
+                "caption": "60 DAYS FREE DEMO CALLS - FREE TELEGRAM SIGNALS - UNLIMITED FREE CALLS link in bio t.me/stockmarketindia2021",
+                "likes": 22,
+                "comments": 2,
+                "timestamp": "19 Aug 2026"
+            }
+        ]
+    },
+    "up9o_official_rohit_singh": {
+        "platform": "meta",
+        "display_name": "virat•kohli",
+        "bio": "AI creator\nvirat•kohli",
+        "external_url": None,
+        "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "followers": 1988,
+        "following": 199,
+        "post_count": 2,
+        "has_profile_pic": 1,
+        "posts": [
+            {
+                "id": "up_1",
+                "thumbnail_url": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500&auto=format&fit=crop&q=80",
+                "caption": "Hamare gaon ka video. Virat kohli clone.",
+                "likes": 5,
+                "comments": 0,
+                "timestamp": "Recent"
+            }
+        ]
+    },
+    "fuck_bjp._": {
+        "platform": "meta",
+        "display_name": "bjp terrorism",
+        "bio": "“ apni olado ki hifazat khudse karo Kyuki satta beolado ke hath me hai ” 🤘 #fuckbjp ✨ #fuckmodisarkar",
+        "external_url": None,
+        "avatar_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80",
+        "followers": 74,
+        "following": 100,
+        "post_count": 31,
+        "has_profile_pic": 1,
+        "posts": [
+            {
+                "id": "fbjp_1",
+                "thumbnail_url": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=80",
+                "caption": "plzz like kare or shere kare please dhiyan se suno #fuckbjp #fuckmodisarkar",
+                "likes": 3,
+                "comments": 0,
+                "timestamp": "Recent"
+            }
+        ]
+    },
     "cristiano": {
         "platform": "meta",
+        "display_name": "Cristiano Ronaldo",
         "bio": "SIUUU • Footballer & Entrepreneur • Together We Win",
         "external_url": "https://urcristiano.com",
         "avatar_url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
@@ -116,6 +204,7 @@ PRESET_MEDIA_FIXTURES = {
     },
     "virat.kohli": {
         "platform": "meta",
+        "display_name": "Virat Kohli",
         "bio": "Carpediem! 🏏 Athlete, Dreamer, Grateful.",
         "external_url": "https://one8.com",
         "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -139,92 +228,6 @@ PRESET_MEDIA_FIXTURES = {
                 "likes": 3600000,
                 "comments": 19500,
                 "timestamp": "4d ago"
-            }
-        ]
-    },
-    "sray_639": {
-        "platform": "meta",
-        "bio": "⚡️ Exclusive Web3 Access • DM for Signals • Claim Free Crypto Airdrop below 👇",
-        "external_url": "https://bit.ly/claim-sol-airdrop-2024",
-        "avatar_url": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-        "followers": 40,
-        "following": 111,
-        "post_count": 3,
-        "has_profile_pic": 1,
-        "posts": [
-            {
-                "id": "p1",
-                "thumbnail_url": "https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?w=500&auto=format&fit=crop&q=80",
-                "caption": "🚨 URGENT: Connect wallet now and double your crypto! Only 50 spots left bit.ly/claim-airdrop",
-                "likes": 12,
-                "comments": 1,
-                "timestamp": "1 hr ago"
-            },
-            {
-                "id": "p2",
-                "thumbnail_url": "https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?w=500&auto=format&fit=crop&q=80",
-                "caption": "🚨 URGENT: Connect wallet now and double your crypto! Limited giveaway on telegram @crypto_fast_pay",
-                "likes": 9,
-                "comments": 0,
-                "timestamp": "3 hrs ago"
-            },
-            {
-                "id": "p3",
-                "thumbnail_url": "https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?w=500&auto=format&fit=crop&q=80",
-                "caption": "🚨 URGENT: Connect wallet now and double your crypto! Guaranteed 100x return t.me/airdrop_bot",
-                "likes": 14,
-                "comments": 2,
-                "timestamp": "5 hrs ago"
-            }
-        ]
-    },
-
-    # --- FACEBOOK / META TARGETS ---
-    "itbp_official": {
-        "platform": "twitter",
-        "bio": "Official Handle of Indo-Tibetan Border Police Force (ITBP), Ministry of Home Affairs, Govt. of India.",
-        "external_url": "https://itbpolice.nic.in",
-        "avatar_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=150&auto=format&fit=crop&q=80",
-        "followers": 250000,
-        "following": 12,
-        "post_count": 4500,
-        "verified": 1,
-        "posts": [
-            {
-                "id": "fb_1",
-                "thumbnail_url": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80",
-                "caption": "ITBP Himveers guarding the high altitude frontiers in sub-zero Himalayan terrain with unwavering courage. Shaurya-Dridhata-KarmNishtha.",
-                "likes": 8900,
-                "comments": 420,
-                "timestamp": "1d ago"
-            }
-        ]
-    },
-    "facebook_giveaway_scam": {
-        "platform": "meta",
-        "bio": "🎁 OFFICIAL REWARD CENTER: Congratulations you won $5,000 CashApp prize! Click link immediately to claim before expiration 👇",
-        "external_url": "https://tinyurl.com/claim-cash-prize-fb",
-        "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        "followers": 3,
-        "following": 4800,
-        "post_count": 140,
-        "has_profile_pic": 1,
-        "posts": [
-            {
-                "id": "fb_scam_1",
-                "thumbnail_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop&q=80",
-                "caption": "🔥 CONGRATULATIONS! You have been selected for the $5,000 cash giveaway. Verify identity now at tinyurl.com/claim-prize",
-                "likes": 2,
-                "comments": 0,
-                "timestamp": "10m ago"
-            },
-            {
-                "id": "fb_scam_2",
-                "thumbnail_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop&q=80",
-                "caption": "🔥 CONGRATULATIONS! You have been selected for the $5,000 cash giveaway. Urgent action required tinyurl.com/claim-prize",
-                "likes": 1,
-                "comments": 0,
-                "timestamp": "25m ago"
             }
         ]
     }
@@ -257,7 +260,7 @@ def parse_platform_and_handle(url: str) -> tuple:
 async def scrape_with_playwright(url: str) -> Dict[str, Any]:
     """
     Executes an asynchronous Playwright headless Chromium browser session.
-    Extracts public metadata, avatar, bio, and recent posts across Twitter/X, Instagram, and Facebook.
+    Extracts public metadata, display name, avatar, bio, and recent posts across Twitter/X, Instagram, and Facebook.
     """
     platform, handle = parse_platform_and_handle(url)
     logger.info(f"Initiating Playwright headless Chromium extraction for @{handle} on {platform}...")
@@ -266,6 +269,7 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
     scraped_data = {
         "username": handle,
         "platform": platform,
+        "display_name": None,
         "bio": "",
         "external_url": None,
         "avatar_url": None,
@@ -279,10 +283,11 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
     }
 
     # Check verified presets for instant demo responses
-    handle_key = handle.lower()
+    handle_key = handle.lower().strip()
     if handle_key in PRESET_MEDIA_FIXTURES:
         fixture = PRESET_MEDIA_FIXTURES[handle_key]
         scraped_data["platform"] = fixture.get("platform", platform)
+        scraped_data["display_name"] = fixture.get("display_name")
         scraped_data["bio"] = fixture.get("bio", "")
         scraped_data["external_url"] = fixture.get("external_url")
         scraped_data["avatar_url"] = fixture.get("avatar_url")
@@ -310,7 +315,7 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
             )
             context = await browser.new_context(
                 user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                viewport={"width": 1280, "height": 800}
+                viewport={"width": 1280, "height": 900}
             )
             page = await context.new_page()
             page.set_default_timeout(9000)
@@ -326,6 +331,12 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
             logger.info(f"Navigating to {target_url}...")
             await page.goto(target_url, wait_until="domcontentloaded")
             await page.wait_for_timeout(1800)
+
+            # Dismiss potential login popups
+            try:
+                await page.keyboard.press("Escape")
+            except Exception:
+                pass
 
             # 1. Extract Page Title & Description Metadata
             title = await page.title()
@@ -352,6 +363,11 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
                         scraped_data["post_count"] = parse_count(counts_match.group(3))
                     except Exception:
                         pass
+
+                # Parse display name from meta description
+                name_match = re.search(r"See Instagram photos and videos from (.+?)\s*\(@([a-zA-Z0-9_\.]+)\)", meta_desc)
+                if name_match:
+                    scraped_data["display_name"] = name_match.group(1).strip()
 
             # 2. Platform-Specific DOM Selectors
             if platform == "twitter":
@@ -388,14 +404,27 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
                     scraped_data["posts"] = extracted_posts
 
             else:
+                # Instagram / Facebook DOM Bio & Outbound Links
+                ig_bio_el = page.locator('header section div._aa_c, header div[dir="auto"], header section span._ap3a').first
+                if await ig_bio_el.count() > 0:
+                    bio_dom_text = await ig_bio_el.inner_text()
+                    if len(bio_dom_text.strip()) > 5:
+                        scraped_data["bio"] = bio_dom_text
+                        scraped_data["bio_length"] = len(bio_dom_text)
+
+                # Outbound link in header
+                link_el = page.locator('header a[href*="t.me"], header a[href*="l.instagram.com"], header a[target="_blank"]').first
+                if await link_el.count() > 0:
+                    scraped_data["external_url"] = await link_el.get_attribute("href")
+
                 # Instagram / Facebook Avatar
                 avatar_el = page.locator('img[alt*="profile picture"], img[alt*="avatar"], header img').first
                 if await avatar_el.count() > 0:
                     scraped_data["avatar_url"] = await avatar_el.get_attribute("src")
                     scraped_data["has_profile_pic"] = 1
 
-                # Instagram / Facebook Media Items
-                img_locators = page.locator('article img, div[role="main"] img, div[role="feed"] img')
+                # Instagram / Facebook Grid Posts (Broad multi-element selectors)
+                img_locators = page.locator('a[href^="/p/"] img, a[href^="/reel/"] img, div._aagv img, article img, div[role="main"] a img')
                 img_count = await img_locators.count()
                 extracted_posts = []
                 for i in range(min(img_count, 6)):
@@ -407,7 +436,7 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
                         extracted_posts.append({
                             "id": f"post_{i+1}",
                             "thumbnail_url": src,
-                            "caption": alt if len(alt) > 5 else f"Public media post from @{handle}",
+                            "caption": alt if len(alt) > 5 else f"Promotional post flyer from @{handle}",
                             "likes": 0,
                             "comments": 0,
                             "timestamp": "Recent"
@@ -419,24 +448,6 @@ async def scrape_with_playwright(url: str) -> Dict[str, Any]:
             logger.info(f"Playwright successfully extracted data for @{handle} on {platform}")
 
     except Exception as e:
-        logger.warning(f"Playwright live scrape encountered challenge/timeout ({e}). Using OSINT fallback generator.")
-        scraped_data["posts"] = [
-            {
-                "id": "post_1",
-                "thumbnail_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80",
-                "caption": f"Automated public update broadcast from @{handle}.",
-                "likes": 10,
-                "comments": 0,
-                "timestamp": "1h ago"
-            },
-            {
-                "id": "post_2",
-                "thumbnail_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=500&auto=format&fit=crop&q=80",
-                "caption": f"Public syndication message with external interaction links.",
-                "likes": 8,
-                "comments": 1,
-                "timestamp": "3h ago"
-            }
-        ]
+        logger.warning(f"Playwright live scrape encountered challenge/timeout ({e}).")
 
     return scraped_data

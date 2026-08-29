@@ -313,6 +313,17 @@ async def session_capture(payload: SessionCaptureRequest):
         "facebook": lambda url: "facebook.com" in url and "/login" not in url and "/checkpoint" not in url,
     }
 
+    # Check if running in a headless cloud environment without a display
+    is_headless_cloud = bool(os.environ.get("RENDER")) or (sys.platform.startswith("linux") and not os.environ.get("DISPLAY"))
+    if is_headless_cloud:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Interactive browser login is only available when running the backend locally on your computer (localhost:8000). "
+                "Cloud deployments (like Render) run headlessly without a desktop display to open a pop-up browser window."
+            ),
+        )
+
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(

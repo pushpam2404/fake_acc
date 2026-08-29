@@ -29,7 +29,7 @@ Law enforcement agencies and social platforms face sophisticated threat vectors 
 
 ### 2. The Multi-Layered Defense & Enforcement Architecture
 
-```
+```text
                                   ┌────────────────────────────────────────┐
                                   │      INPUT: Profile URL / Telemetry    │
                                   └──────────────────┬─────────────────────┘
@@ -45,21 +45,21 @@ Law enforcement agencies and social platforms face sophisticated threat vectors 
               │ • Reputation & Velocity Score│                │ • Caption Uniformity Matrix  │
               │ • Username Syntax & Digits   │                │ • Identity Token Discrepancy │
               │ • Account Age & Activity Rate│                │ • Outbound Redirect Audit    │
-              └──────────────┬───────────────┘                └──────────────┬───────────────┘
+              └──────────────┬───────────────┘                └──────────────┬──────────────-┘
                              │                                               │
                              └───────────────────────┬───────────────────────┘
                                                      │
                                                      ▼
                                       ┌──────────────────────────────┐
                                       │  Continuous Multimodal Fusion│
-                                      │  Risk = (XGB × w1) + (NLP × w2)
+                                      │Risk = (XGB × w1) + (NLP × w2)|
                                       └──────────────┬───────────────┘
                                                      │
                                      ┌───────────────┴───────────────┐
                                      ▼                               ▼
-                      ┌──────────────────────────────┐┌──────────────────────────────┐
-                      │    SHAP Decision Forensics   ││ Interactive CIB Graph & PDF  │
-                      └──────────────┬───────────────┘└──────────────────────────────┘
+                      ┌──────────────────────────────┐  ┌──────────────────────────────┐
+                      │    SHAP Decision Forensics   │  │ Interactive CIB Graph & PDF  │
+                      └──────────────┬───────────────┘  └──────────────────────────────┘
                                      │
                                      ▼
                       ┌──────────────────────────────────────────────┐

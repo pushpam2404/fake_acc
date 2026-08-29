@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { PRESET_ACCOUNTS } from './presets';
 import { analyzeAccount, checkHealth, analyzeUrl, downloadReport } from './api';
 import { AccountFeatures, AnalyzeResponse } from './types';
-import { BatchView } from './BatchView';
-import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown, Sparkles } from 'lucide-react';
+import { SessionManager } from './SessionManager';
+import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown, Sparkles, Shield, LayoutDashboard, KeyRound } from 'lucide-react';
 import { NetworkGraph } from './NetworkGraph';
 import { MediaAuditView } from './MediaAuditView';
 import './index.css';
 
-
-
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'scan' | 'sessions'>('scan');
   const [platform, setPlatform] = useState<'twitter' | 'meta'>('twitter');
   const [selectedPresetId, setSelectedPresetId] = useState<string>('tw_bot');
   const [formData, setFormData] = useState<AccountFeatures>(PRESET_ACCOUNTS[0].features);
@@ -20,7 +19,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [profileUrl, setProfileUrl] = useState<string>('');
   const [scraping, setScraping] = useState<boolean>(false);
-
 
   // Check backend health on mount
   useEffect(() => {
@@ -140,19 +138,63 @@ export default function App() {
       {/* PUBLICATION EDITORIAL HEADER */}
       <header className="app-header">
         <div>
-          <div className="eyebrow">SIH1775 • SPECIAL INTELLIGENCE REPORT</div>
+          <div className="eyebrow">CYBER THREAT INTELLIGENCE</div>
           <h1 className="publication-title">The Bot & Threat Detector</h1>
-          <div className="publication-issue">Dual-Platform XGBoost Model Inference & SHAP Attribution</div>
-        </div>
-
-        <div className="status-badge" style={{ borderColor: backendStatus === 'online' ? 'rgba(22, 163, 74, 0.4)' : 'rgba(220, 38, 38, 0.4)', color: backendStatus === 'online' ? '#16a34a' : '#dc2626', background: backendStatus === 'online' ? 'rgba(22, 163, 74, 0.08)' : 'rgba(220, 38, 38, 0.08)' }}>
-          <div className="status-dot" style={{ background: backendStatus === 'online' ? '#16a34a' : '#dc2626' }} />
-          <span>API: {backendStatus.toUpperCase()}</span>
+          <div className="publication-issue">Automated Multi-Platform Profile Forensic & Inauthentic Behavior Analysis</div>
         </div>
       </header>
 
-      {/* MAIN DASHBOARD GRID */}
-      <div className="dashboard-grid">
+      {/* TOP NAVIGATION TABS */}
+      <div style={{
+        display: 'flex',
+        gap: '0.75rem',
+        marginBottom: '1.75rem',
+        borderBottom: '1px solid var(--border-default)',
+        paddingBottom: '0.75rem',
+      }}>
+        <button
+          onClick={() => setActiveTab('scan')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.6rem 1.1rem',
+            borderRadius: '6px',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            border: activeTab === 'scan' ? '1px solid #6366f1' : '1px solid var(--border-default)',
+            background: activeTab === 'scan' ? 'rgba(99,102,241,0.15)' : 'var(--bg-card)',
+            color: activeTab === 'scan' ? '#a5b4fc' : 'var(--text-secondary)',
+            transition: 'all 0.2s',
+          }}
+        >
+          <LayoutDashboard size={16} /> Real-Time URL & Telemetry Scan
+        </button>
+
+        <button
+          onClick={() => setActiveTab('sessions')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.6rem 1.1rem',
+            borderRadius: '6px',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            border: activeTab === 'sessions' ? '1px solid #6366f1' : '1px solid var(--border-default)',
+            background: activeTab === 'sessions' ? 'rgba(99,102,241,0.15)' : 'var(--bg-card)',
+            color: activeTab === 'sessions' ? '#a5b4fc' : 'var(--text-secondary)',
+            transition: 'all 0.2s',
+          }}
+        >
+          <KeyRound size={16} /> Platform Sessions & Auth
+        </button>
+      </div>
+
+      {activeTab === 'scan' && (
+        <div className="dashboard-grid">
         {/* LEFT COLUMN: EDITORIAL FORM & PRESETS */}
         <div className="editorial-panel" style={{ padding: '1.75rem' }}>
           {/* SECTION 00: PROFILE URL SCAN */}
@@ -180,15 +222,15 @@ export default function App() {
               >
                 {scraping ? (
                   <>
-                    <div className="spinner" /> Scraping Headless DOM & NLP...
+                    <div className="spinner" /> Analyzing...
                   </>
                 ) : (
                   'Deep Scan URL'
                 )}
               </button>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '6px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              <span>⚡ Powered by <b>Playwright Chromium</b> + <b>SentenceTransformer (all-MiniLM-L6-v2)</b></span>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '6px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+              <span>Supports public Instagram, X, and Facebook profile URLs</span>
             </div>
           </div>
 
@@ -204,13 +246,13 @@ export default function App() {
               className={`tab-btn ${platform === 'twitter' ? 'active' : ''}`}
               onClick={() => handlePlatformSwitch('twitter')}
             >
-              🐦 Twitter / X
+              X
             </button>
             <button
               className={`tab-btn ${platform === 'meta' ? 'active' : ''}`}
               onClick={() => handlePlatformSwitch('meta')}
             >
-              📸 Meta (Instagram & Facebook)
+              Meta (Instagram & Facebook)
             </button>
           </div>
 
@@ -338,7 +380,7 @@ export default function App() {
             <button className="analyze-btn" onClick={handleAnalyze} disabled={loading} style={{ flex: 1, marginTop: 0 }}>
               {loading ? (
                 <>
-                  <div className="spinner" /> Analyzing Account Metrics...
+                  <div className="spinner" /> Analyzing...
                 </>
               ) : (
                 <>
@@ -386,6 +428,32 @@ export default function App() {
                 </div>
               </div>
 
+              {/* IDENTITY INFO */}
+              {result.username && (
+                <div style={{
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '6px',
+                  padding: '0.75rem 1rem',
+                  marginTop: '0.75rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                  fontSize: '0.85rem',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: 'var(--text-muted)', minWidth: '110px' }}>Handle:</span>
+                    <span className="mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>@{result.username}</span>
+                  </div>
+                  {result.display_name && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-muted)', minWidth: '110px' }}>Display Name:</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{result.display_name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* RISK SCORE METER */}
               <div className="meter-container">
                 <div className="meter-header">
@@ -415,7 +483,7 @@ export default function App() {
                 <ul className="reasons-list">
                   {result.reasons.map((reason, idx) => (
                     <li key={idx} className="reason-item">
-                      <div className="reason-bullet">§{idx + 1}</div>
+                      <div className="reason-bullet">{idx + 1}</div>
                       <span>{reason}</span>
                     </li>
                   ))}
@@ -462,18 +530,26 @@ export default function App() {
             </div>
           ) : (
             <div className="empty-state">
-              <div className="empty-icon">📰</div>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Report Standby</h3>
-              <p style={{ maxWidth: '340px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Select a sample telemetry profile on the left or enter custom account metrics, then click <b>Analyze Account Security Risk</b> to generate a report.
+              <div className="empty-icon" style={{ marginBottom: '0.6rem' }}>
+                <Shield size={36} color="#6366f1" />
+              </div>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem', fontFamily: 'var(--font-serif)' }}>
+                Forensic Investigation Standby
+              </h3>
+              <p style={{ maxWidth: '360px', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Paste any public <b>Instagram</b>, <b>X</b>, or <b>Facebook</b> profile link above and click <b>Deep Scan URL</b>, or select sample telemetry on the left to run an assessment.
               </p>
             </div>
           )}
         </div>
       </div>
+    )}
 
-      {/* SECTION 04: BATCH CSV ANALYSIS */}
-      <BatchView />
+      {activeTab === 'sessions' && (
+        <div className="editorial-panel" style={{ padding: '2rem' }}>
+          <SessionManager />
+        </div>
+      )}
     </div>
   );
 }

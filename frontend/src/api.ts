@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AccountFeatures, AnalyzeResponse } from "./types";
+import { AccountFeatures, AnalyzeResponse, SessionStatus } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -8,7 +8,7 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 seconds for live Playwright headless browser extraction
+  timeout: 60000, // 60s default — URL scan may take time
 });
 
 export async function analyzeAccount(
@@ -39,3 +39,32 @@ export async function checkHealth(): Promise<{ status: string; message: string }
   return res.data;
 }
 
+// ── Session Management ──────────────────────────────────────────────────────
+
+export async function getSessionStatus(): Promise<SessionStatus> {
+  const res = await api.get<SessionStatus>("/session/status");
+  return res.data;
+}
+
+export async function captureSession(
+  platform: "twitter" | "instagram" | "facebook"
+): Promise<{ status: string; platform: string; cookies_saved: number; message: string }> {
+  // Uses a separate axios instance with a 4-minute timeout
+  // (user has up to 3 minutes to log in manually in the Chromium window)
+  const res = await axios.post(
+    `${API_BASE}/session/capture`,
+    { platform },
+    {
+      headers: { "Content-Type": "application/json" },
+      timeout: 240_000, // 4 minutes
+    }
+  );
+  return res.data;
+}
+
+export async function revokeSession(
+  platform: "twitter" | "instagram" | "facebook"
+): Promise<{ status: string; platform: string; message: string }> {
+  const res = await api.post("/session/revoke", { platform });
+  return res.data;
+}

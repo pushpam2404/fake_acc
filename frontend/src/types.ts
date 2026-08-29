@@ -55,6 +55,7 @@ export interface AnalyzeResponse {
   confidence: number;
   reasons: string[];
   username?: string;
+  display_name?: string;
   raw_features?: AccountFeatures;
   network_graph?: any;
   content_analysis?: ContentAnalysis;
@@ -73,3 +74,14 @@ export interface PresetAccount {
   features: AccountFeatures;
 }
 
+export interface PlatformSessionInfo {
+  connected: boolean;
+  captured_at: string | null;
+  cookies_count: number;
+}
+
+export interface SessionStatus {
+  twitter: PlatformSessionInfo;
+  instagram: PlatformSessionInfo;
+  facebook: PlatformSessionInfo;
+}

@@ -1,5 +1,4 @@
 import re
-import random
 import logging
 import instaloader
 from datetime import datetime
@@ -8,83 +7,6 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OSINT_Scraper")
 
-# Pre-cached target intelligence database for famous/demo profiles
-# This ensures that even if Twitter/Meta rate limit our server mid-presentation,
-# the demo works flawlessly with standard targets.
-OFFLINE_INTEL_CACHE = {
-    "elonmusk": {
-        "followers": 195000000,
-        "following": 600,
-        "post_count": 48000,
-        "verified": 1,
-        "description_length": 45,
-        "account_age_days": 5600,
-        "has_url": 1,
-        "has_profile_pic": 1,
-        "platform": "twitter",
-        "username": "elonmusk"
-    },
-    "cybersec_alert_bot": {
-        "followers": 12,
-        "following": 3200,
-        "post_count": 89000,
-        "verified": 0,
-        "description_length": 150,
-        "account_age_days": 12,
-        "has_url": 1,
-        "has_profile_pic": 0,
-        "platform": "twitter",
-        "username": "cybersec_alert_bot"
-    },
-    "itbp_official": {
-        "followers": 250000,
-        "following": 12,
-        "post_count": 4500,
-        "verified": 1,
-        "description_length": 85,
-        "account_age_days": 3200,
-        "has_url": 1,
-        "has_profile_pic": 1,
-        "platform": "twitter",
-        "username": "itbp_official"
-    },
-    "virat.kohli": {
-        "followers": 272000000,
-        "following": 278,
-        "post_count": 1058,
-        "has_profile_pic": 1,
-        "bio_length": 65,
-        "platform": "meta",
-        "username": "virat.kohli"
-    },
-    "viratkohli": {
-        "followers": 272000000,
-        "following": 278,
-        "post_count": 1058,
-        "has_profile_pic": 1,
-        "bio_length": 65,
-        "platform": "meta",
-        "username": "virat.kohli"
-    },
-    "cristiano": {
-        "followers": 640000000,
-        "following": 500,
-        "post_count": 3700,
-        "has_profile_pic": 1,
-        "bio_length": 80,
-        "platform": "meta",
-        "username": "cristiano"
-    },
-    "insta_spam_99": {
-        "followers": 2,
-        "following": 7500,
-        "post_count": 0,
-        "has_profile_pic": 0,
-        "bio_length": 0,
-        "platform": "meta",
-        "username": "insta_spam_99"
-    }
-}
 
 def parse_profile_url(url: str) -> tuple:
     """
@@ -92,45 +14,47 @@ def parse_profile_url(url: str) -> tuple:
     Returns (username, platform) or (None, None).
     """
     url = url.strip()
-    
+
     # Twitter / X pattern
-    twitter_match = re.search(r"(?:twitter\.com|x\.com)/([a-zA-Z0-9_]{1,15})", url)
+    twitter_match = re.search(r"(?:twitter\.com|x\.com)/([a-zA-Z0-9_]{1,25})", url)
     if twitter_match:
         return twitter_match.group(1), "twitter"
-        
+
     # Instagram pattern
     insta_match = re.search(r"instagram\.com/([a-zA-Z0-9_\.]{1,30})", url)
     if insta_match:
         return insta_match.group(1), "meta"
-        
+
     # Facebook pattern (Meta)
-    fb_match = re.search(r"facebook\.com/([a-zA-Z0-9_\.]{1,50})", url)
+    fb_match = re.search(r"(?:facebook\.com|fb\.com)/([a-zA-Z0-9_\.]{1,50})", url)
     if fb_match:
         return fb_match.group(1), "meta"
-        
+
     return None, None
+
 
 def scrape_meta_profile(username: str) -> dict:
     """
     Scrapes public metadata of an Instagram account using Instaloader.
+    Falls back to heuristic estimation if rate-limited or account is private.
     """
     logger.info(f"Initiating live Instaloader scan for Instagram profile: @{username}")
     L = instaloader.Instaloader()
-    
+
     # Disable loading tags, comments, geodata to maximize speed and minimize bans
     L.compress_json = False
     L.download_geotags = False
     L.download_comments = False
     L.save_metadata_json = False
-    
+
     try:
         profile = instaloader.Profile.from_username(L.context, username)
-        
+
         # Determine if profile pic is default/missing
         has_profile_pic = 1
         if not profile.profile_pic_url or "default" in profile.profile_pic_url:
             has_profile_pic = 0
-            
+
         return {
             "username": username,
             "followers": profile.followers,
@@ -138,76 +62,121 @@ def scrape_meta_profile(username: str) -> dict:
             "post_count": profile.mediacount,
             "has_profile_pic": has_profile_pic,
             "bio_length": len(profile.biography) if profile.biography else 0,
-            "platform": "meta"
+            "bio": profile.biography or "",
+            "platform": "meta",
+            "scrape_success": True,
         }
     except Exception as e:
         logger.error(f"Instaloader failed to scrape @{username}: {str(e)}")
         raise e
 
+
+def _heuristic_meta_estimate(username: str) -> dict:
+    """
+    Generates a heuristic profile estimate for Meta/Instagram profiles
+    when Instaloader is rate-limited. Based on username structure signals.
+    No random values — uses deterministic hash-based seeding.
+    """
+    seed = sum(ord(c) for c in username)
+    # Use deterministic patterns derived from username structure
+    has_many_digits = len(re.findall(r"\d", username)) > 3
+    is_long = len(username) > 14
+    has_underscores = username.count("_") > 2
+
+    if has_many_digits or (is_long and has_underscores):
+        # Bot-like username structure
+        followers = 2 + (seed % 20)
+        following = 2000 + (seed % 5000)
+        post_count = seed % 5
+        has_profile_pic = 0
+        bio_length = 0
+    else:
+        # Human-like username structure
+        followers = 100 + (seed % 900)
+        following = 150 + (seed % 500)
+        post_count = 20 + (seed % 200)
+        has_profile_pic = 1
+        bio_length = 30 + (seed % 90)
+
+    return {
+        "username": username,
+        "followers": followers,
+        "following": following,
+        "post_count": post_count,
+        "has_profile_pic": has_profile_pic,
+        "bio_length": bio_length,
+        "platform": "meta",
+        "scrape_success": False,
+    }
+
+
+def _heuristic_twitter_estimate(username: str) -> dict:
+    """
+    Generates a heuristic profile estimate for Twitter/X profiles
+    when live API access is unavailable. Deterministic — based on
+    username structure analysis (digit density, length, delimiter patterns).
+    """
+    digit_count = len(re.findall(r"\d", username))
+    uname_len = len(username)
+    delimiter_count = username.count("_") + username.count(".")
+
+    # Bot signature: many digits, long name, many delimiters
+    is_bot_structure = digit_count > 3 or (uname_len > 12 and digit_count > 1) or delimiter_count > 2
+
+    seed = sum(ord(c) for c in username)
+
+    if is_bot_structure:
+        return {
+            "username": username,
+            "followers": 2 + (seed % 48),
+            "following": 1500 + (seed % 3500),
+            "post_count": 500 + (seed % 19500),
+            "verified": 0,
+            "description_length": seed % 45,
+            "account_age_days": -1,
+            "has_url": 1 if (seed % 3 == 0) else 0,
+            "has_profile_pic": 0,
+            "platform": "twitter",
+            "scrape_success": False,
+        }
+    else:
+        return {
+            "username": username,
+            "followers": 150 + (seed % 4350),
+            "following": 100 + (seed % 1100),
+            "post_count": 50 + (seed % 2950),
+            "verified": 1 if (seed % 7 == 0) else 0,
+            "description_length": 30 + (seed % 90),
+            "account_age_days": -1,
+            "has_url": 1 if (seed % 2 == 0) else 0,
+            "has_profile_pic": 1,
+            "platform": "twitter",
+            "scrape_success": False,
+        }
+
+
 def scrape_profile_data(url: str) -> dict:
     """
     Parses the profile URL and retrieves profile features.
-    Uses live scrapers where possible, falling back to cache database
-    or heuristic estimation if rate limits are hit.
+    Uses live scrapers where possible, falling back to deterministic
+    heuristic estimation (based on username structure analysis) if
+    rate limits are hit. Never returns hardcoded named-account data.
     """
     username, platform = parse_profile_url(url)
     if not username:
         raise ValueError("Unsupported or invalid social media profile URL.")
-        
-    # Check if target is pre-seeded in the offline cache
-    username_key = username.lower()
-    if username_key in OFFLINE_INTEL_CACHE:
-        logger.info(f"Target @{username} found in Local Intel Cache.")
-        return OFFLINE_INTEL_CACHE[username_key]
-        
+
     # Live execution based on platform
     if platform == "meta":
         try:
             return scrape_meta_profile(username)
         except Exception:
-            # Fallback heuristic generator so the live UI never hangs
-            logger.warning(f"Instaloader rate-limited. Serving heuristic estimation for @{username}.")
-            return {
-                "username": username,
-                "followers": random.randint(10, 500),
-                "following": random.randint(2000, 7500),
-                "post_count": random.randint(0, 5),
-                "has_profile_pic": random.choice([0, 1]),
-                "bio_length": random.randint(0, 30),
-                "platform": "meta"
-            }
-            
+            # Deterministic heuristic fallback — never random, never hardcoded
+            logger.warning(f"Instaloader rate-limited. Serving deterministic heuristic estimation for @{username}.")
+            return _heuristic_meta_estimate(username)
+
     elif platform == "twitter":
-        # Live scraping X requires credentials, so we use a high-fidelity OSINT estimator
-        # mapping typical bot/human distributions based on public name length
-        logger.info(f"Applying OSINT Heuristic parser for Twitter profile: @{username}")
-        is_bot = len(re.findall(r"\d", username)) > 3 or len(username) > 12
-        
-        if is_bot:
-            return {
-                "username": username,
-                "followers": random.randint(1, 50),
-                "following": random.randint(1500, 5000),
-                "post_count": random.randint(500, 20000),
-                "verified": 0,
-                "description_length": random.randint(0, 45),
-                "account_age_days": random.randint(2, 60),
-                "has_url": random.choice([0, 1]),
-                "has_profile_pic": 0,
-                "platform": "twitter"
-            }
-        else:
-            return {
-                "username": username,
-                "followers": random.randint(150, 4500),
-                "following": random.randint(100, 1200),
-                "post_count": random.randint(50, 3000),
-                "verified": random.choice([0, 1]),
-                "description_length": random.randint(30, 120),
-                "account_age_days": random.randint(100, 1800),
-                "has_url": random.choice([0, 1]),
-                "has_profile_pic": 1,
-                "platform": "twitter"
-            }
-            
+        logger.info(f"Applying OSINT heuristic structure analysis for Twitter profile: @{username}")
+        return _heuristic_twitter_estimate(username)
+
     raise ValueError("Target platform could not be resolved.")

@@ -59,7 +59,7 @@ THREAT_PATTERNS = [
     {
         "category": "Unregistered Stock Tips & Telegram Funnel",
         "weight": 45,
-        "regex": r"(?i)\b(intraday\s+calls|f&o\s+trading|nifty|banknifty|call[\s\/]+put|sure\s*shot|stock\s+tips|free\s+telegram|120\s+days\s+free|demo\s+calls|jackpot\s+calls|trading\s+signals|full\s*time\s*trader|stock\s*market|stockstrading)\b",
+        "regex": r"(?i)\b(intraday\s+calls|f&o\s+trading|nifty|banknifty|call[\s\/]+put|sure\s*shot|stock\s+tips|free\s+telegram|120\s+days\s+free|demo\s+calls|jackpot\s+calls|trading\s+signals|full\s*time\s*trader|stock\s*market)\b",
         "description": "Unregistered stock advisory, F&O intraday calls, or high-risk financial Telegram funnel."
     },
     # 5. Crypto & Financial Fraud

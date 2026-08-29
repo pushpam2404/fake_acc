@@ -4,7 +4,7 @@ export const PRESET_ACCOUNTS: PresetAccount[] = [
   // --- TWITTER PRESETS ---
   {
     id: "tw_bot",
-    name: "Mass-Spam Twitter Bot",
+    name: "Mass-Spam X Bot",
     platform: "twitter",
     description: "New account, 4500 following vs 12 followers, 2500 posts/day, no bio.",
     features: {

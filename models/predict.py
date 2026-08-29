@@ -29,6 +29,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import shap
+from typing import Optional, Dict, List, Any
 
 SAVED_MODELS_DIR = os.path.join(os.path.dirname(__file__), "saved")
 
@@ -347,10 +348,20 @@ def predict(features_dict: dict, platform: str = "auto") -> dict:
         else:
             reasons = ["Multiple anomalous telemetry metrics exceed automated risk thresholds."]
 
+    # Compute continuous dynamic confidence from exact probability
+    if classification == "FAKE":
+        conf_raw = risk_score_raw
+    elif classification == "REAL":
+        conf_raw = 1.0 - risk_score_raw
+    else:  # SUSPICIOUS
+        conf_raw = 0.50 + abs(risk_score_raw - 0.50)
+
+    dynamic_confidence = float(round(float(np.clip(conf_raw, 0.51, 0.9999)), 4))
+
     return {
         "platform": platform,
         "risk_score": risk_score,
         "classification": classification,
-        "confidence": round(risk_score_raw if classification == "FAKE" else (1 - risk_score_raw), 2),
+        "confidence": dynamic_confidence,
         "reasons": reasons
     }

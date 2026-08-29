@@ -52,44 +52,48 @@ export function MediaAuditView({
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           borderBottom: '1px solid var(--border-default)',
           paddingBottom: '0.75rem',
           marginBottom: '1rem',
+          gap: '0.75rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Sparkles size={18} color="#9333ea" />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+          <Sparkles size={17} color="#9333ea" style={{ flexShrink: 0, marginTop: '2px' }} />
           <h4
             style={{
               margin: 0,
-              fontSize: '0.9rem',
+              fontSize: '0.88rem',
               color: 'var(--text-primary)',
               textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.04em',
               fontWeight: 700,
+              lineHeight: 1.35,
             }}
           >
-            Playwright Multimodal & Media Forensic Audit
+            Multimodal Media & Content Forensic Audit
           </h4>
         </div>
 
         {contentAnalysis && (
           <div
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              padding: '3px 8px',
+              padding: '4px 10px',
               borderRadius: '4px',
               background: `${threatBadgeColor}15`,
               border: `1px solid ${threatBadgeColor}40`,
               color: threatBadgeColor,
               fontSize: '0.75rem',
               fontWeight: 700,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
-            <ShieldAlert size={14} />
+            <ShieldAlert size={14} style={{ flexShrink: 0 }} />
             <span>THREAT: {threatLevel}</span>
           </div>
         )}
@@ -146,9 +150,6 @@ export function MediaAuditView({
             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               @{username || 'target_profile'}
             </span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'rgba(15, 23, 42, 0.06)', padding: '1px 6px', borderRadius: '3px' }}>
-              Headless Chromium Verified
-            </span>
           </div>
 
           <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>
@@ -196,16 +197,18 @@ export function MediaAuditView({
               background: 'rgba(15, 23, 42, 0.02)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Neural Caption Uniformity
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '6px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                Caption Uniformity
               </span>
               <span
                 className="mono"
                 style={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   color: isRepetitive ? '#dc2626' : '#16a34a',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {simScore}%
@@ -237,16 +240,18 @@ export function MediaAuditView({
               background: 'rgba(15, 23, 42, 0.02)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Content Fraud & Threat Score
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '6px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                Content Threat Score
               </span>
               <span
                 className="mono"
                 style={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   color: threatBadgeColor,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {contentAnalysis.content_risk_score} / 100
@@ -265,7 +270,7 @@ export function MediaAuditView({
             </div>
 
             <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '5px' }}>
-              Engine: <span className="mono" style={{ fontWeight: 600 }}>{contentAnalysis.caption_similarity?.method || 'Neural NLP'}</span>
+              Multi-signal NLP & Threat Detection
             </div>
           </div>
         </div>
@@ -305,9 +310,6 @@ export function MediaAuditView({
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <Layers size={14} /> Extracted Post Media Gallery ({posts.length} Posts)
             </div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              Headless DOM Crawl
-            </span>
           </div>
 
           <div

@@ -9,9 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # Append root directory to path to allow importing from the models directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from backend.schemas import AccountFeatures, AnalyzeResponse, BatchRequest, ReportRequest, UrlRequest
+from backend.schemas import (
+    AccountFeatures, AnalyzeResponse, BatchRequest, ReportRequest, UrlRequest,
+    SessionCaptureRequest, SessionStatusResponse, PlatformSessionInfo,
+)
 from models.predict import predict
 from backend.report_generator import build_pdf_report
+from backend.session_manager import get_all_session_status, save_session, revoke_session
 from fastapi.responses import StreamingResponse
 
 
@@ -52,14 +56,7 @@ def analyze(features: AccountFeatures):
             raise HTTPException(status_code=500, detail=result["error"])
             
         result = sanitize_result(result)
-        
-        # Compute network graph
-        from backend.network_analyser import analyze_profile_network
-        result["network_graph"] = analyze_profile_network(
-            username, 
-            result["platform"], 
-            result["risk_score"]
-        )
+        result["network_graph"] = None
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
@@ -140,10 +137,11 @@ async def analyze_url(payload: UrlRequest):
             print(f"Playwright scrape notice: {pe}")
             playwright_data = {}
 
-        # 2. Extract Tabular Metrics (only fetch secondary OSINT if Playwright didn't get valid numbers)
-        has_full_counts = bool(playwright_data.get("followers", 0) > 0 and playwright_data.get("followers") != 100)
-        
-        if not has_full_counts:
+        # 2. Extract Tabular Metrics — only hit OSINT if Playwright didn't successfully scrape
+        # scrape_success=True means the scraper got real DOM data; False = fallback/blocked
+        playwright_scrape_success = bool(playwright_data.get("scrape_success", False))
+
+        if not playwright_scrape_success:
             try:
                 osint_features = scrape_profile_data(payload.url)
             except Exception:
@@ -153,13 +151,17 @@ async def analyze_url(payload: UrlRequest):
 
         username = playwright_data.get("username") or osint_features.get("username", "unknown_user")
         platform = playwright_data.get("platform") or osint_features.get("platform", "auto")
-        
+        display_name = playwright_data.get("display_name")
+
         features = {**osint_features, **{k: v for k, v in playwright_data.items() if k in ['followers', 'following', 'post_count', 'has_profile_pic', 'bio_length'] and v is not None}}
         features["username"] = username
         features["platform"] = platform
 
         # 3. Run XGBoost Machine Learning Tabular Prediction
-        predict_input = {k: v for k, v in features.items() if k not in ["username", "platform", "bio", "posts", "avatar_url", "external_url", "scraper_engine"]}
+        predict_input = {k: v for k, v in features.items() if k not in [
+            "username", "platform", "bio", "posts", "avatar_url",
+            "external_url", "scraper_engine", "scrape_success", "display_name"
+        ]}
         result = predict(predict_input, platform=platform)
         
         if "error" in result:
@@ -167,6 +169,7 @@ async def analyze_url(payload: UrlRequest):
             
         result = sanitize_result(result)
         result["username"] = username
+        result["display_name"] = display_name
         result["raw_features"] = features
         
         # 4. Run Multimodal NLP, Phishing & Caption Similarity Analysis
@@ -211,6 +214,19 @@ async def analyze_url(payload: UrlRequest):
             result["classification"] = "FAKE"
         elif unified_risk >= 35.0:
             result["classification"] = "SUSPICIOUS"
+        else:
+            result["classification"] = "REAL"
+
+        # Dynamically calculate confidence from the unified risk score
+        unified_prob = float(unified_risk) / 100.0
+        if result["classification"] == "FAKE":
+            dyn_conf = unified_prob
+        elif result["classification"] == "REAL":
+            dyn_conf = 1.0 - unified_prob
+        else:
+            dyn_conf = 0.50 + abs(unified_prob - 0.50)
+
+        result["confidence"] = float(round(float(np.clip(dyn_conf, 0.51, 0.9999)), 4))
 
         # Prepend content/threat forensic reasons if any threats detected
         for forensic in reversed(content_analysis.get("forensic_reasons", [])):
@@ -232,6 +248,126 @@ async def analyze_url(payload: UrlRequest):
 async def analyze_deep(payload: UrlRequest):
     """Alias for deep Playwright multimodal audit."""
     return await analyze_url(payload)
+
+
+# ============================================================================
+# SESSION MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.get("/session/status", response_model=SessionStatusResponse)
+def session_status():
+    """
+    Returns which platforms have active saved sessions.
+    Used by the frontend Settings panel to show connection status.
+    """
+    raw = get_all_session_status()
+    return SessionStatusResponse(
+        twitter=PlatformSessionInfo(**raw["twitter"]),
+        instagram=PlatformSessionInfo(**raw["instagram"]),
+        facebook=PlatformSessionInfo(**raw["facebook"]),
+    )
+
+
+@app.post("/session/capture")
+async def session_capture(payload: SessionCaptureRequest):
+    """
+    Launches a VISIBLE (non-headless) Playwright Chromium browser window.
+    The user logs in to the platform manually (handles 2FA/CAPTCHA themselves).
+    Once login is detected, the session is saved and the browser closes.
+
+    The user's PASSWORD is never stored — only the browser session cookies.
+    """
+    from playwright.async_api import async_playwright
+    import asyncio
+
+    platform = payload.platform
+    login_urls = {
+        "twitter": "https://x.com/i/flow/login",
+        "instagram": "https://www.instagram.com/accounts/login/",
+        "facebook": "https://www.facebook.com/login/",
+    }
+    success_domains = {
+        "twitter": "x.com",
+        "instagram": "instagram.com",
+        "facebook": "facebook.com",
+    }
+    # Patterns that indicate a successful login (not on a login/flow page)
+    login_complete_patterns = {
+        "twitter": lambda url: "x.com" in url and "/login" not in url and "/flow" not in url,
+        "instagram": lambda url: "instagram.com" in url and "/login" not in url and "/accounts" not in url,
+        "facebook": lambda url: "facebook.com" in url and "/login" not in url and "/checkpoint" not in url,
+    }
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=False,   # VISIBLE window — user logs in themselves
+                args=["--no-sandbox", "--disable-setuid-sandbox"],
+            )
+            context = await browser.new_context(
+                viewport={"width": 1100, "height": 800},
+                user_agent=(
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/122.0.0.0 Safari/537.36"
+                ),
+            )
+            page = await context.new_page()
+            await page.goto(login_urls[platform])
+
+            # Wait up to 3 minutes for the user to log in
+            is_logged_in = login_complete_patterns[platform]
+            timeout = 180  # seconds
+            interval = 2
+            elapsed = 0
+            while elapsed < timeout:
+                await asyncio.sleep(interval)
+                elapsed += interval
+                current_url = page.url
+                if is_logged_in(current_url):
+                    # Give the page a moment to fully load cookies
+                    await asyncio.sleep(2)
+                    break
+            else:
+                await browser.close()
+                raise HTTPException(
+                    status_code=408,
+                    detail=f"Login timeout: user did not complete {platform} login within 3 minutes."
+                )
+
+            # Save the full browser session state (cookies + localStorage)
+            storage_state = await context.storage_state()
+            await browser.close()
+
+        path = save_session(platform, storage_state)
+        cookie_count = len(storage_state.get("cookies", []))
+        return {
+            "status": "captured",
+            "platform": platform,
+            "cookies_saved": cookie_count,
+            "session_path": path,
+            "message": f"Session captured for {platform}. {cookie_count} cookies saved. Future scans will use this session."
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Session capture failed: {str(e)}")
+
+
+@app.post("/session/revoke")
+def session_revoke(payload: SessionCaptureRequest):
+    """
+    Deletes the saved session for a platform.
+    The user will need to reconnect before scraping that platform again.
+    """
+    deleted = revoke_session(payload.platform)
+    return {
+        "status": "revoked" if deleted else "not_found",
+        "platform": payload.platform,
+        "message": f"Session for {payload.platform} {'deleted' if deleted else 'was not found'}."
+    }
+
 
 @app.get("/health")
 def health():

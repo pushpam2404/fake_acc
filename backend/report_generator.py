@@ -45,9 +45,11 @@ def build_pdf_report(username: str, features: dict, prediction: dict) -> bytes:
     pdf.add_page()
     
     # 1. CASE HEADER INFO
+    import hashlib
+    case_suffix = hashlib.sha256(username.encode()).hexdigest()[:3].upper()
     pdf.set_font("Helvetica", "B", 11)
     pdf.set_text_color(17, 24, 39)
-    pdf.cell(95, 6, f"CASE FILE REF: ITBP-FSA-{datetime.now().strftime('%Y%m%d')}-092", border=0)
+    pdf.cell(95, 6, f"CASE FILE REF: ITBP-FSA-{datetime.now().strftime('%Y%m%d')}-{case_suffix}", border=0)
     pdf.set_font("Helvetica", "", 10)
     pdf.cell(95, 6, f"REPORT DATE: {datetime.now().strftime('%d %B %Y')}", border=0, align="R", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
@@ -68,11 +70,17 @@ def build_pdf_report(username: str, features: dict, prediction: dict) -> bytes:
     pdf.set_fill_color(255, 255, 255)
     
     body_content = (
-        f"  Target Username/ID : @{username}\n"
-        f"  Source Platform    : {prediction['platform'].upper()}\n"
-        f"  Security Status    : {prediction['classification']} (Threat Level Matrix)\n"
-        f"  Fake Probability   : {prediction['risk_score']}% Risk Score\n"
-        f"  Detection Model    : Tuned XGBoost Decision Ensemble (SIH-1775-v1.0)"
+        f"  Target Username/ID  : @{username}\n"
+    )
+    display_name = features.get("display_name") or prediction.get("display_name")
+    if display_name:
+        body_content += f"  Display Name        : {display_name}\n"
+    body_content += (
+        f"  Source Platform     : {prediction['platform'].upper()}\n"
+        f"  Security Status     : {prediction['classification']} (Threat Level Matrix)\n"
+        f"  Unified Risk Score  : {prediction.get('multimodal_risk_score', prediction['risk_score'])}% (ML Tabular + NLP Fusion)\n"
+        f"  Tabular ML Score    : {features.get('tabular_score', prediction['risk_score'])}%\n"
+        f"  Detection Model     : Tuned XGBoost Decision Ensemble (SIH-1775-v1.0)"
     )
     pdf.multi_cell(190, 6, body_content, border=1, fill=True)
     pdf.ln(5)
@@ -185,18 +193,18 @@ def build_pdf_report(username: str, features: dict, prediction: dict) -> bytes:
     pdf.set_y(-45)
     pdf.set_font("Helvetica", "B", 9)
     pdf.set_text_color(31, 41, 55)
-    pdf.cell(95, 5, "REPORT DIGEST MD5 SHA256 HASH", border=0)
+    pdf.cell(95, 5, "REPORT DIGEST SHA256 HASH", border=0)
     pdf.cell(95, 5, "OFFICER AUTHORIZATION SIGNATURE", border=0, align="R", new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_font("Courier", "I", 7)
     pdf.set_text_color(107, 114, 128)
     import hashlib
     hash_str = f"{username}-{prediction['risk_score']}-{datetime.now().isoformat()}"
     sha_hash = hashlib.sha256(hash_str.encode()).hexdigest()
     pdf.cell(95, 5, sha_hash[:40].upper(), border=0)
-    
+
     pdf.set_font("Helvetica", "", 8)
     pdf.cell(95, 5, ".................................................................", border=0, align="R", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(190, 5, "Investigating Officer Cyber Unit Sign-off", border=0, align="R")
-    
+
     return bytes(pdf.output())

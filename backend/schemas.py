@@ -1,5 +1,19 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
+
+class SessionCaptureRequest(BaseModel):
+    platform: Literal["twitter", "instagram", "facebook"]
+
+class PlatformSessionInfo(BaseModel):
+    connected: bool
+    captured_at: Optional[str] = None
+    cookies_count: int = 0
+
+class SessionStatusResponse(BaseModel):
+    twitter: PlatformSessionInfo
+    instagram: PlatformSessionInfo
+    facebook: PlatformSessionInfo
+
 
 class AccountFeatures(BaseModel):
     followers: int
@@ -18,6 +32,7 @@ class AccountFeatures(BaseModel):
     has_profile_pic: Optional[int] = 0
     bio_length: Optional[int] = 0
     platform: Optional[str] = "auto"
+    username: Optional[str] = None
 
 class PostMediaItem(BaseModel):
     id: str
@@ -43,6 +58,8 @@ class AnalyzeResponse(BaseModel):
     classification: str          # "REAL" | "SUSPICIOUS" | "FAKE"
     confidence: float
     reasons: List[str]
+    username: Optional[str] = None
+    display_name: Optional[str] = None
     network_graph: Optional[dict] = None
     content_analysis: Optional[ContentAnalysis] = None
     posts: Optional[List[PostMediaItem]] = None

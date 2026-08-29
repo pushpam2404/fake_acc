@@ -36,18 +36,21 @@ def parse_profile_url(url: str) -> tuple:
 def scrape_meta_profile(username: str) -> dict:
     """
     Scrapes public metadata of an Instagram account using Instaloader.
-    Falls back to heuristic estimation if rate-limited or account is private.
+    Falls back to heuristic estimation immediately if rate-limited or account is private.
     """
     logger.info(f"Initiating live Instaloader scan for Instagram profile: @{username}")
-    L = instaloader.Instaloader()
-
-    # Disable loading tags, comments, geodata to maximize speed and minimize bans
-    L.compress_json = False
-    L.download_geotags = False
-    L.download_comments = False
-    L.save_metadata_json = False
-
     try:
+        L = instaloader.Instaloader(
+            max_connection_attempts=1,
+            request_timeout=4.0,
+            fatal_status_codes=[429, 401, 403, 404]
+        )
+        L.compress_json = False
+        L.download_geotags = False
+        L.download_comments = False
+        L.save_metadata_json = False
+        L.context.raise_all_errors = True
+
         profile = instaloader.Profile.from_username(L.context, username)
 
         # Determine if profile pic is default/missing
@@ -67,8 +70,8 @@ def scrape_meta_profile(username: str) -> dict:
             "scrape_success": True,
         }
     except Exception as e:
-        logger.error(f"Instaloader failed to scrape @{username}: {str(e)}")
-        raise e
+        logger.warning(f"Instaloader lookup failed for @{username} ({e}). Falling back to heuristic analysis.")
+        return _heuristic_meta_estimate(username)
 
 
 def _heuristic_meta_estimate(username: str) -> dict:

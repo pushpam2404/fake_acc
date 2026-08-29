@@ -3,6 +3,7 @@ import os
 import io
 import pandas as pd
 import numpy as np
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,13 +18,24 @@ from models.predict import predict
 from backend.report_generator import build_pdf_report
 from backend.session_manager import get_all_session_status, save_session, revoke_session
 from fastapi.responses import StreamingResponse
+from backend.cases import router as cases_router, create_tables
+from backend.seed_cases import seed_cases
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """On startup: ensure DB tables exist and seed mock cases if empty."""
+    create_tables()
+    seed_cases()
+    yield
 
 
 
 app = FastAPI(
     title="SIH1775 Fake Account Detector API",
     description="Live dual-platform inference API powered by tuned XGBoost and SHAP explainability.",
-    version="1.0.0"
+    version="2.0.0",
+    lifespan=lifespan,
 )
 
 # CORS Middleware (Mandatory for React Frontend Integration)
@@ -33,6 +45,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include the escalation cases router
+app.include_router(cases_router)
 
 def sanitize_result(res: dict) -> dict:
     """Safely converts numpy data types to standard Python primitives for JSON encoding."""

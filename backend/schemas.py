@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Literal
+from datetime import datetime
 
 class SessionCaptureRequest(BaseModel):
     platform: Literal["twitter", "instagram", "facebook"]
@@ -78,3 +79,32 @@ class ReportRequest(BaseModel):
 
 class UrlRequest(BaseModel):
     url: str
+
+
+# ── Escalation & Case Management ────────────────────────────────────────────
+
+class CaseCreate(BaseModel):
+    platform: Literal["twitter", "meta"]
+    handle: str
+    risk_score: float
+    classification: Literal["FAKE", "SUSPICIOUS"]
+    reasons: List[str]
+
+
+class CaseOut(BaseModel):
+    id: str
+    platform: str
+    handle: str
+    risk_score: float
+    classification: str
+    reasons: List[str]
+    status: str
+    created_at: str          # ISO-8601 string (serialised from datetime in cases.py)
+    updated_at: str
+    reviewed_by: Optional[str] = None
+    report_generated: bool
+
+
+class CaseStatusUpdate(BaseModel):
+    status: str
+    reviewed_by: Optional[str] = None

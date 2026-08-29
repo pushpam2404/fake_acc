@@ -175,3 +175,65 @@ Every classification in this system is computed dynamically using generalized al
 | **"How do you prevent false positives on everyday people who don't write captions?"** | We engineered accessibility boilerplate stripping (`clean_user_caption`). If a user posts personal videos without text, our system recognizes it as organic visual media and reports 0% uniformity rather than mistaking Instagram's alt text for bot spam. |
 | **"Is this admissible in court?"** | Yes. Our PDF report generates an ITBP/MHA header, SHA256 cryptographic file integrity hash, exact SHAP evidence attribution, and an officer sign-off block structured for compliance with **Section 65B of the Indian Evidence Act**. |
 | **"How does the Network Graph detect botnets?"** | Using NetworkX graph algorithms, we calculate Degree Centrality and Graph Density. Bot farms exhibit dense inter-connected cliques (density $>0.6$), whereas organic human networks form sparse trees (density $<0.2$). |
+
+---
+
+## 📋 Phase 6: Central Agency Escalation & Reporting Module (IT Rules 2021 Compliance Pipeline)
+
+### The Problem This Phase Solves
+
+Detection without enforcement is intelligence without consequence. Phases 1–5 could identify a FAKE or SUSPICIOUS account with 90%+ accuracy in 0.15 seconds — but the output was a JSON blob on a screen. There was no answer to the most important operational question: *"A flagged account has been detected. Now what?"*
+
+India's IT Rules 2021, Rule 3(1)(d), mandates that Significant Social Media Intermediaries (SSMIs) must acknowledge government/agency takedown requests within 24 hours and act upon them within 72 hours, or face loss of safe harbour immunity under Section 79 of the IT Act 2000. This module closes the loop: it turns a detection result into a trackable legal escalation case.
+
+### What Was Built
+
+#### Backend: `backend/cases.py` — SQLite Persistence + REST API
+
+* **Zero-setup persistence**: Uses SQLAlchemy with a local SQLite file (`backend/cases.db`, auto-created on first startup). No Postgres, no Docker, no environment variables — a fresh clone with `pip install -r requirements.txt` is enough.
+* **Case Model**: Stores `id` (UUID), `platform`, `handle`, `risk_score`, `classification`, `reasons` (JSON array from SHAP), `status` (workflow enum), `created_at`, `updated_at`, `reviewed_by`, and `report_generated`.
+* **Forward-only status workflow**: `FLAGGED → UNDER_REVIEW → REPORT_SENT → TAKEDOWN_CONFIRMED`. Any attempt to skip a step or move backward returns a `400 Bad Request` with the legal next state named explicitly. No state machine library — pure dict-based transition table.
+* **6 REST endpoints** mounted at `/cases`:
+  - `POST /cases` — create case (guards: `REAL` accounts rejected, `numpy` float sanitized via the existing `sanitize_result` pattern)
+  - `GET /cases` — list all, newest first
+  - `GET /cases/summary` — dashboard stats (total, pending, reports_sent, takedowns_confirmed, avg_time_to_takedown_hours)
+  - `GET /cases/{id}` — single case detail
+  - `PATCH /cases/{id}/status` — advance status (validates legal transition)
+  - `GET /cases/{id}/report` — structured JSON report with `legal_basis` citing IT Rules 2021, sets `report_generated=True`
+* **Critical routing fix**: `GET /cases/summary` is declared *before* `GET /cases/{id}` in the router to prevent FastAPI from treating the literal string `"summary"` as a UUID path parameter.
+* **Startup seeding**: `backend/seed_cases.py` inserts 10 realistic mock cases (across all 4 statuses, both platforms, with SHAP-style reasons) on first startup if the table is empty. The dashboard is never blank on a fresh demo.
+
+#### Backend: `backend/seed_cases.py` — Demo-Ready Data
+
+10 seed cases modeled on real detection scenarios (bot farms, celebrity impersonators, Telegram stock funnels, government handle spoofing, information warfare cells). Reasons text matches the style of `frontend/src/presets.ts` for narrative consistency.
+
+#### Frontend: `EscalationView.tsx` — Central Agency Dashboard
+
+* **Summary strip**: 4 stat cards (Total Escalated, Pending Review, Reports Sent, Avg. Time-to-Takedown) with live data from `GET /cases/summary`.
+* **Cases table**: Filterable by status, shows Handle, Platform, Risk Score (color-coded by threshold), Classification badge, Flagged Date, and inline "quick advance" status button.
+* **Detail drawer**: Slides in from the right with the full SHAP reasons list (reusing `reason-item`/`reason-bullet` CSS classes from the existing design system), officer name input, and "Advance Status" button with next-legal-state logic enforced on both client and server.
+* **Formal Report modal**: Calls `GET /cases/{id}/report`, renders the JSON as a readable printable view (serif headers, monospace `legal_basis` citation). Includes "Copy as JSON" and "Print (Cmd+P)" buttons. No PDF library — browser print handles demo output.
+* **Toast system**: Lightweight, no external dependency.
+
+#### Frontend: `BatchView.tsx` — CSV Batch Analysis with Escalation
+
+* Drag-and-drop CSV upload to `/analyze/batch/csv`.
+* Per-row SHAP reasons accordion (click to expand).
+* Per-row "Escalate" button (only shown for FAKE/SUSPICIOUS) calling `POST /cases`.
+* Summary strip showing batch totals and an "Escalation Centre →" CTA banner when threats are detected.
+* "Escalated ✓" state persists within the session after escalation.
+
+#### Frontend: `App.tsx` — Navigation & Escalate Button
+
+* Added two new nav tabs: **Batch CSV Analysis** and **Central Agency Cases**.
+* "Escalate to Central Agency" button appears on the Scan tab's result panel only when classification is `FAKE` or `SUSPICIOUS`. On click, `POST /cases` is called and a toast confirms. The button uses the classification's risk color (red for FAKE, amber for SUSPICIOUS) so it's visually obvious without adding clutter for REAL results.
+
+### Known Limitation: Render Ephemeral Filesystem
+
+`cases.db` is stored as a file at `backend/cases.db`. On Render's free-tier web service, the filesystem resets on each deploy, meaning case data does not persist across redeployments. This is acceptable for a demo session (data survives for the session duration) and is standard behaviour for SQLite on any PaaS with ephemeral disks.
+
+**For a production deployment**, the fix would be one of:
+1. Mount a Render Persistent Disk (available on paid plans) at a fixed path and point `DB_PATH` to it.
+2. Migrate to PostgreSQL with SQLAlchemy's `postgresql://` connection string (zero code changes beyond the URL).
+
+This limitation is explicitly flagged here and does not silently fail — the backend starts cleanly and seeds fresh data on each deploy, keeping the demo functional.

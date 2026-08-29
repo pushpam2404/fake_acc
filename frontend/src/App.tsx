@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { PRESET_ACCOUNTS } from './presets';
-import { analyzeAccount, checkHealth, analyzeUrl, downloadReport } from './api';
-import { AccountFeatures, AnalyzeResponse } from './types';
+import { analyzeAccount, checkHealth, analyzeUrl, downloadReport, createCase } from './api';
+import { AccountFeatures, AnalyzeResponse, CaseCreate } from './types';
 import { SessionManager } from './SessionManager';
-import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown, Sparkles, Shield, LayoutDashboard, KeyRound } from 'lucide-react';
+import { EscalationView } from './EscalationView';
+import { BatchView } from './BatchView';
+import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown, Sparkles, Shield, LayoutDashboard, KeyRound, Scale, BarChart3 } from 'lucide-react';
 import { NetworkGraph } from './NetworkGraph';
 import { MediaAuditView } from './MediaAuditView';
 import './index.css';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'scan' | 'sessions'>('scan');
+  const [activeTab, setActiveTab] = useState<'scan' | 'batch' | 'escalation' | 'sessions'>('scan');
   const [platform, setPlatform] = useState<'twitter' | 'meta'>('twitter');
   const [selectedPresetId, setSelectedPresetId] = useState<string>('tw_bot');
   const [formData, setFormData] = useState<AccountFeatures>(PRESET_ACCOUNTS[0].features);
@@ -19,6 +21,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [profileUrl, setProfileUrl] = useState<string>('');
   const [scraping, setScraping] = useState<boolean>(false);
+  const [escalateLoading, setEscalateLoading] = useState<boolean>(false);
+  const [escalateToast, setEscalateToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   // Check backend health on mount
   useEffect(() => {
@@ -51,7 +55,7 @@ export default function App() {
   };
 
   const handleInputChange = (field: keyof AccountFeatures, value: any) => {
-    setFormData((prev) => ({
+    setFormData((prev: AccountFeatures) => ({
       ...prev,
       [field]: typeof value === 'number' && isNaN(value) ? 0 : value,
     }));
@@ -132,6 +136,31 @@ export default function App() {
     }
   };
 
+  const handleEscalate = async () => {
+    if (!result || escalateLoading) return;
+    if (result.classification !== 'FAKE' && result.classification !== 'SUSPICIOUS') return;
+    setEscalateLoading(true);
+    try {
+      const platform: 'twitter' | 'meta' =
+        result.platform === 'twitter' ? 'twitter' : 'meta';
+      const payload: CaseCreate = {
+        platform,
+        handle: result.username || formData.username || 'unknown_handle',
+        risk_score: result.risk_score,
+        classification: result.classification as 'FAKE' | 'SUSPICIOUS',
+        reasons: result.reasons ?? [],
+      };
+      await createCase(payload);
+      setEscalateToast({ msg: `@${payload.handle} escalated to Central Agency ✓`, type: 'success' });
+      setTimeout(() => setEscalateToast(null), 4000);
+    } catch (e: any) {
+      setEscalateToast({ msg: e?.response?.data?.detail ?? 'Escalation failed', type: 'error' });
+      setTimeout(() => setEscalateToast(null), 4000);
+    } finally {
+      setEscalateLoading(false);
+    }
+  };
+
 
   return (
     <div className="container">
@@ -151,46 +180,35 @@ export default function App() {
         marginBottom: '1.75rem',
         borderBottom: '1px solid var(--border-default)',
         paddingBottom: '0.75rem',
+        flexWrap: 'wrap' as const,
       }}>
-        <button
-          onClick={() => setActiveTab('scan')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1.1rem',
-            borderRadius: '6px',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            border: activeTab === 'scan' ? '1px solid #6366f1' : '1px solid var(--border-default)',
-            background: activeTab === 'scan' ? 'rgba(99,102,241,0.15)' : 'var(--bg-card)',
-            color: activeTab === 'scan' ? '#a5b4fc' : 'var(--text-secondary)',
-            transition: 'all 0.2s',
-          }}
-        >
-          <LayoutDashboard size={16} /> Real-Time URL & Telemetry Scan
-        </button>
-
-        <button
-          onClick={() => setActiveTab('sessions')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1.1rem',
-            borderRadius: '6px',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            border: activeTab === 'sessions' ? '1px solid #6366f1' : '1px solid var(--border-default)',
-            background: activeTab === 'sessions' ? 'rgba(99,102,241,0.15)' : 'var(--bg-card)',
-            color: activeTab === 'sessions' ? '#a5b4fc' : 'var(--text-secondary)',
-            transition: 'all 0.2s',
-          }}
-        >
-          <KeyRound size={16} /> Platform Sessions & Auth
-        </button>
+        {([
+          { key: 'scan',       label: 'Real-Time URL & Telemetry Scan', icon: <LayoutDashboard size={16} /> },
+          { key: 'batch',      label: 'Batch CSV Analysis',             icon: <BarChart3 size={16} /> },
+          { key: 'escalation', label: 'Central Agency Cases',           icon: <Scale size={16} /> },
+          { key: 'sessions',   label: 'Platform Sessions & Auth',       icon: <KeyRound size={16} /> },
+        ] as const).map(({ key, label, icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.1rem',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: activeTab === key ? '1px solid #6366f1' : '1px solid var(--border-default)',
+              background: activeTab === key ? 'rgba(99,102,241,0.15)' : 'var(--bg-card)',
+              color: activeTab === key ? '#a5b4fc' : 'var(--text-secondary)',
+              transition: 'all 0.2s',
+            }}
+          >
+            {icon} {label}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'scan' && (
@@ -212,7 +230,7 @@ export default function App() {
                 className="form-input"
                 style={{ flex: 1, margin: 0 }}
                 value={profileUrl}
-                onChange={(e) => setProfileUrl(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileUrl(e.target.value)}
               />
               <button
                 className="analyze-btn"
@@ -291,7 +309,7 @@ export default function App() {
                 type="number"
                 className="form-input"
                 value={formData.followers}
-                onChange={(e) => handleInputChange('followers', parseInt(e.target.value) || 0)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('followers', parseInt(e.target.value) || 0)}
               />
             </div>
 
@@ -301,7 +319,7 @@ export default function App() {
                 type="number"
                 className="form-input"
                 value={formData.following}
-                onChange={(e) => handleInputChange('following', parseInt(e.target.value) || 0)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('following', parseInt(e.target.value) || 0)}
               />
             </div>
 
@@ -311,7 +329,7 @@ export default function App() {
                 type="number"
                 className="form-input"
                 value={formData.post_count}
-                onChange={(e) => handleInputChange('post_count', parseInt(e.target.value) || 0)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('post_count', parseInt(e.target.value) || 0)}
               />
             </div>
 
@@ -323,7 +341,7 @@ export default function App() {
                     type="number"
                     className="form-input"
                     value={formData.account_age_days || 0}
-                    onChange={(e) => handleInputChange('account_age_days', parseInt(e.target.value) || 0)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('account_age_days', parseInt(e.target.value) || 0)}
                   />
                 </div>
 
@@ -332,7 +350,7 @@ export default function App() {
                   <select
                     className="form-input custom-select"
                     value={formData.verified || 0}
-                    onChange={(e) => handleInputChange('verified', parseInt(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('verified', parseInt(e.target.value))}
                   >
                     <option value={0}>0 (Unverified)</option>
                     <option value={1}>1 (Verified Blue Check)</option>
@@ -345,7 +363,7 @@ export default function App() {
                     type="text"
                     className="form-input"
                     value={formData.username || ''}
-                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('username', e.target.value)}
                   />
                 </div>
               </>
@@ -356,7 +374,7 @@ export default function App() {
                   <select
                     className="form-input custom-select"
                     value={formData.has_profile_pic || 0}
-                    onChange={(e) => handleInputChange('has_profile_pic', parseInt(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('has_profile_pic', parseInt(e.target.value))}
                   >
                     <option value={0}>0 (Default Avatar)</option>
                     <option value={1}>1 (Valid Avatar)</option>
@@ -369,7 +387,7 @@ export default function App() {
                     type="number"
                     className="form-input"
                     value={formData.bio_length || 0}
-                    onChange={(e) => handleInputChange('bio_length', parseInt(e.target.value) || 0)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('bio_length', parseInt(e.target.value) || 0)}
                   />
                 </div>
               </>
@@ -481,7 +499,7 @@ export default function App() {
                   <BookOpen size={18} color="#b45309" /> SHAP Decision Attribution
                 </h3>
                 <ul className="reasons-list">
-                  {result.reasons.map((reason, idx) => (
+                  {result.reasons.map((reason: string, idx: number) => (
                     <li key={idx} className="reason-item">
                       <div className="reason-bullet">{idx + 1}</div>
                       <span>{reason}</span>
@@ -506,27 +524,59 @@ export default function App() {
               )}
 
               {/* PDF EXPORT BUTTON */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.75rem', flexDirection: 'column' }}>
 
-              <button
-                className="analyze-btn"
-                onClick={handleDownloadReport}
-                style={{
-                  marginTop: '1.75rem',
-                  width: '100%',
-                  background: '#b91c1c',
-                  color: 'white',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  alignItems: 'center',
-                  fontWeight: 600,
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '0.75rem'
-                }}
-              >
-                <FileDown size={18} /> Export Forensic Case File (PDF)
-              </button>
+                {/* Escalate to Central Agency (only for FAKE / SUSPICIOUS) */}
+                {(result.classification === 'FAKE' || result.classification === 'SUSPICIOUS') && (
+                  <button
+                    className="analyze-btn"
+                    onClick={handleEscalate}
+                    disabled={escalateLoading}
+                    style={{
+                      width: '100%',
+                      marginTop: 0,
+                      background: result.classification === 'FAKE'
+                        ? 'rgba(220,38,38,0.12)'
+                        : 'rgba(217,119,6,0.12)',
+                      color: result.classification === 'FAKE' ? '#dc2626' : '#d97706',
+                      border: `1px solid ${result.classification === 'FAKE' ? 'rgba(220,38,38,0.35)' : 'rgba(217,119,6,0.35)'}`,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      alignItems: 'center',
+                      fontWeight: 700,
+                      borderRadius: '4px',
+                      padding: '0.7rem',
+                      fontSize: '0.88rem',
+                    }}
+                  >
+                    {escalateLoading
+                      ? <><div className="spinner" style={{ borderTopColor: result.classification === 'FAKE' ? '#dc2626' : '#d97706', borderColor: 'rgba(0,0,0,0.1)' }} /> Escalating…</>
+                      : <><Scale size={16} /> Escalate to Central Agency</>}
+                  </button>
+                )}
+
+                <button
+                  className="analyze-btn"
+                  onClick={handleDownloadReport}
+                  style={{
+                    width: '100%',
+                    marginTop: 0,
+                    background: '#b91c1c',
+                    color: 'white',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                    fontWeight: 600,
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '0.75rem'
+                  }}
+                >
+                  <FileDown size={18} /> Export Forensic Case File (PDF)
+                </button>
+              </div>
             </div>
           ) : (
             <div className="empty-state">
@@ -545,11 +595,52 @@ export default function App() {
       </div>
     )}
 
+      {activeTab === 'batch' && (
+        <div className="editorial-panel" style={{ padding: '1.75rem' }}>
+          <BatchView onNavigateEscalation={() => setActiveTab('escalation')} />
+        </div>
+      )}
+
+      {activeTab === 'escalation' && (
+        <div className="editorial-panel" style={{ padding: '1.75rem' }}>
+          <EscalationView />
+        </div>
+      )}
+
       {activeTab === 'sessions' && (
         <div className="editorial-panel" style={{ padding: '2rem' }}>
           <SessionManager />
         </div>
       )}
+
+      {/* Inline escalation toast */}
+      {escalateToast && (
+        <div style={{
+          position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999,
+          padding: '0.75rem 1.1rem',
+          background: escalateToast.type === 'success' ? 'rgba(22,163,74,0.95)' : 'rgba(220,38,38,0.95)',
+          color: '#fff', borderRadius: '6px',
+          fontSize: '0.83rem', fontWeight: 600,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          minWidth: '280px',
+          animation: 'fadeInUp 0.2s ease',
+        }}>
+          {escalateToast.type === 'success'
+            ? <CheckCircle2 size={15} />
+            : <AlertTriangle size={15} />}
+          {escalateToast.msg}
+          <button
+            onClick={() => setEscalateToast(null)}
+            style={{ marginLeft: 'auto', background: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1rem' }}>×</button>
+        </div>
+      )}
+      <style>{`
+        @keyframes fadeInUp {
+          from { transform: translateY(8px); opacity: 0; }
+          to   { transform: translateY(0);   opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

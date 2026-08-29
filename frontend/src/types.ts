@@ -85,3 +85,54 @@ export interface SessionStatus {
   instagram: PlatformSessionInfo;
   facebook: PlatformSessionInfo;
 }
+
+// ── Escalation & Case Management ────────────────────────────────────────────
+
+export type CaseStatus =
+  | 'FLAGGED'
+  | 'UNDER_REVIEW'
+  | 'REPORT_SENT'
+  | 'TAKEDOWN_CONFIRMED';
+
+export interface Case {
+  id: string;
+  platform: 'twitter' | 'meta';
+  handle: string;
+  risk_score: number;
+  classification: 'FAKE' | 'SUSPICIOUS';
+  reasons: string[];
+  status: CaseStatus;
+  created_at: string;   // ISO-8601
+  updated_at: string;   // ISO-8601
+  reviewed_by: string | null;
+  report_generated: boolean;
+}
+
+export interface CaseSummary {
+  total_flagged: number;
+  pending_review: number;
+  reports_sent: number;
+  takedowns_confirmed: number;
+  avg_time_to_takedown_hours: number | null;
+}
+
+export interface CaseReport {
+  case_id: string;
+  platform: string;
+  handle: string;
+  risk_score: number;
+  classification: string;
+  reasons: string[];
+  evidence_summary: string;
+  legal_basis: string;
+  generated_at: string;
+  status: string;
+}
+
+export interface CaseCreate {
+  platform: 'twitter' | 'meta';
+  handle: string;
+  risk_score: number;
+  classification: 'FAKE' | 'SUSPICIOUS';
+  reasons: string[];
+}

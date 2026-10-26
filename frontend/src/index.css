@@ -178,9 +178,14 @@ input, select {
   gap: 1.75rem;
 }
 
+/* min-width: 0 lets wide children (inputs, tabs) shrink instead of stretching the grid track */
+.dashboard-grid > * {
+  min-width: 0;
+}
+
 @media (max-width: 960px) {
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -300,11 +305,12 @@ input, select {
 /* Form Controls */
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1rem;
 }
 
 .form-group {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -320,6 +326,7 @@ input, select {
 }
 
 .form-input {
+  min-width: 0;
   background: #ffffff;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);

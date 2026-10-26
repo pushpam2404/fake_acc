@@ -200,9 +200,9 @@ export default function App() {
               fontSize: '0.85rem',
               fontWeight: 600,
               cursor: 'pointer',
-              border: activeTab === key ? '1px solid #6366f1' : '1px solid var(--border-default)',
-              background: activeTab === key ? 'rgba(99,102,241,0.15)' : 'var(--bg-card)',
-              color: activeTab === key ? '#a5b4fc' : 'var(--text-secondary)',
+              border: activeTab === key ? '1px solid var(--accent-gold)' : '1px solid var(--border-default)',
+              background: activeTab === key ? 'rgba(180,83,9,0.08)' : 'var(--bg-card)',
+              color: activeTab === key ? 'var(--accent-gold)' : 'var(--text-secondary)',
               transition: 'all 0.2s',
             }}
           >
@@ -394,8 +394,8 @@ export default function App() {
             )}
           </div>
 
-          <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
-            <button className="analyze-btn" onClick={handleAnalyze} disabled={loading} style={{ flex: 1, marginTop: 0 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1.5rem" }}>
+            <button className="analyze-btn" onClick={handleAnalyze} disabled={loading} style={{ flex: "1 1 14rem", marginTop: 0 }}>
               {loading ? (
                 <>
                   <div className="spinner" /> Analyzing...

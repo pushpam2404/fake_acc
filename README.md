@@ -1,183 +1,103 @@
-# 🛡️ Dual-Platform Fake Account, Impersonation & Threat Detection Engine
+# Fake account detector
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5.0-646CFF.svg)](https://vitejs.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![XGBoost](https://img.shields.io/badge/XGBoost-1.7%2B-orange.svg)](https://xgboost.readthedocs.io/)
-[![SentenceTransformers](https://img.shields.io/badge/SentenceTransformers-all--MiniLM--L6--v2-red.svg)](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-[![Playwright](https://img.shields.io/badge/Playwright-Headless_Chromium-green.svg)](https://playwright.dev/)
-[![SHAP](https://img.shields.io/badge/SHAP-Explainability-brightgreen.svg)](https://shap.readthedocs.io/)
-[![NetworkX](https://img.shields.io/badge/NetworkX-Graph_Analysis-blueviolet.svg)](https://networkx.org/)
+![ci](https://github.com/pushpam2404/fake_acc/actions/workflows/ci.yml/badge.svg)
 
-Intelligence-grade fake account, botnet, impersonator, and social threat detection engine built for **ITBP / Ministry of Home Affairs (SIH-1775)**. Features dual-platform XGBoost classification (101,000+ accounts), real-time SHAP plain-English explainability, live Playwright Headless Chromium DOM & media extraction, local PyTorch neural NLP (`all-MiniLM-L6-v2`) semantic threat detection, coordinated threat network topology, and 1-click forensic PDF case file export across **Twitter/X**, **Instagram**, and **Facebook**.
+Live: https://fake-acc.vercel.app
 
----
+A web tool that scores a social media account as real, suspicious or fake. It was built for Smart India Hackathon problem statement 1775 (ITBP / Ministry of Home Affairs). It only analyses accounts; it does not create or operate any.
 
-## ⚡ Quickstart (Local Development)
+You give it a profile's numbers (followers, following, posts, account age, bio length, username shape) or a profile URL. A gradient-boosted classifier returns a risk score, SHAP explains which features pushed the score, and a PDF case file can be exported. The same page can batch-score a CSV and track flagged accounts through a small case-review workflow.
 
-### 1. Backend Web Service (`http://localhost:8000`)
+![Result page at 1440 px: sample profiles, telemetry form, risk score and the SHAP reasons](docs/screenshots/analysis-1440.png)
+
+## What is in it
+
+- **Two classifiers.** XGBoost on 13 features for Twitter/X and on 7 features for Instagram/Facebook ("meta"). Models are in `models/saved/`. Features are listed in `models/predict.py`.
+- **Explanations.** `models/predict.py` turns SHAP values into plain-language reasons.
+- **URL scan.** `POST /analyze/url` drives a headless Chromium (Playwright) or Instaloader to read a public profile, then adds caption similarity and identity checks (display name versus handle) from `backend/content_analyser.py`, which uses the `all-MiniLM-L6-v2` sentence-embedding model. This part needs network access, the platforms' pages as they are today, and often a logged-in session. I did not run it for this cleanup; see Limitations.
+- **Network graph.** `backend/network_analyser.py` builds a NetworkX graph of related accounts for the dashboard.
+- **Case workflow.** `backend/cases.py` keeps flagged accounts in SQLite and only lets a case move forward one step: flagged, under review, report sent, takedown confirmed. The cases that appear at first start come from `backend/seed_cases.py` and are made up.
+- **Batch CSV.** `demo_batch.csv` shows the expected columns.
+
+## Models and data
+
+The training tables are `data/processed/twitter_master.csv` (64,919 accounts) and `data/processed/meta_master.csv` (36,383 accounts). They were built by `feature_extractor/build_twitter.py` and `build_meta.py` from the CSVs in `data/raw/`, which come from public research datasets (the folder names refer to Cresci-2017, an IMFAD/LIMFADD set and several Kaggle uploads). I could not confirm download locations or licences for them, so check the licence of each before reusing them.
+
+The Twitter human/bot dataset also shipped about 24,000 profile pictures of real users. No code reads them, so they were removed from the tree and are ignored in `.gitignore`. They are still in git history.
+
+Training scripts are in `models/experiments/` (hyper-parameter search with 3-fold cross-validation, scored on F1 of the fake class).
+
+### Results
+
+Test split: 20% of each table, `random_state=42`, stratified, which is what the tuning scripts use. The saved XGBoost models, evaluated on that split during this cleanup:
+
+| | Accounts in test split | Accuracy | F1 (fake class) | Accuracy / F1 recorded in `models/results.md` |
+|---|---|---|---|---|
+| Twitter / X | 12,984 | 89.82% | 86.00% | 90.04% / 85.63% |
+| Meta | 7,277 | 96.72% | 97.02% | 96.87% / 97.15% |
+
+The numbers are close but not identical to the recorded ones. I did not retrain, so I do not know whether the saved files predate the final run of the tuning script. `models/results.md` also lists a soft-voting ensemble that scores slightly higher. Its pickles are excluded by `.gitignore` and are not in the repo, so the app uses the tuned XGBoost models.
+
+## Layout
+
+```
+backend/            FastAPI app: main.py (routes), cases.py, schemas.py, scrapers, content_analyser.py,
+                    network_analyser.py, report_generator.py, session_manager.py
+models/             predict.py (inference + SHAP), saved/ (models and scalers), experiments/, results.md
+feature_extractor/  builds the processed tables from data/raw
+data/               processed/ (tables used for training) and raw/ (source CSVs)
+frontend/           React 18 + TypeScript + Vite single-page app
+tests/              API and workflow tests
+notebooks/          small scripts for inspecting data and sanity-checking predictions
+```
+
+## Run it locally
+
+Python 3.12 and Node 20.
+
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt     # torch is a large download
+.venv/bin/uvicorn backend.main:app --port 8000    # API docs at /docs, health check at /health
 
-# Launch FastAPI with auto-reload
-uvicorn backend.main:app --reload --port 8000
+cd frontend && npm install && npm run dev         # http://localhost:5173
 ```
-- Interactive Swagger API Docs: `http://localhost:8000/docs`
-- Health Check: `http://localhost:8000/health`
 
-### 2. Frontend React Dashboard (`http://localhost:5173`)
+The frontend calls `http://localhost:8000` in dev. For a deployed frontend set `VITE_API_BASE` (see `frontend/.env.example`). After `npm run build`, the backend also serves `frontend/dist` itself.
+
+For a URL scan you also need `playwright install chromium`.
+
+### API
+
 ```bash
-cd frontend
-npm install
-npm run dev
+curl -X POST localhost:8000/analyze -H 'content-type: application/json' -d '{
+  "platform": "twitter", "followers": 12, "following": 4500, "post_count": 5000,
+  "verified": 0, "description_length": 0, "account_age_days": 2, "has_url": 1 }'
 ```
 
----
+Other routes: `POST /analyze/batch`, `POST /analyze/batch/csv`, `POST /analyze/url`, `POST /analyze/report` (PDF), `/cases`, `/session/*`.
 
-## 🌐 Production Cloud Deployment Guide
+## Deployment
 
-### Part A: Backend Web Service ➔ Render (`render.com`)
-1. Create a new **Web Service** on Render connecting your GitHub repository.
-2. Set **Root Directory**: `.`
-3. Set **Build Command**:
-   ```bash
-   pip install -r backend/requirements.txt && playwright install chromium --with-deps
-   ```
-4. Set **Start Command**:
-   ```bash
-   uvicorn backend.main:app --host 0.0.0.0 --port $PORT
-   ```
-5. Set Environment Variables:
-   - `TOKENIZERS_PARALLELISM`: `false`
-   - `PYTHONUNBUFFERED`: `1`
+The frontend is the Vite app in `frontend/`, which `frontend/vercel.json` configures for Vercel. `render.yaml` describes the backend as a Render web service and the `Dockerfile` builds the whole app (frontend and backend) for a container host. The repo cleanup did not touch any of these files.
 
-### Part B: Frontend Web App ➔ Vercel (`vercel.com`)
-1. Create a new Project on Vercel importing this GitHub repository.
-2. Set **Root Directory**: `frontend`
-3. Set Environment Variable: `VITE_API_BASE` = `https://your-backend.onrender.com`
-4. Deploy!
+## Tests
 
----
-
-## 📌 Technical Architecture
-
-```text
-fake-account-detection/
-├── backend/
-│   ├── main.py                # FastAPI REST server, URL scanner, Multimodal Fusion & CORS
-│   ├── schemas.py             # Pydantic data contracts (PostMediaItem, ContentAnalysis, AnalyzeResponse)
-│   ├── playwright_scraper.py  # Playwright headless Chromium DOM, avatar, bio & post scraper
-│   ├── content_analyser.py    # Local SentenceTransformer neural NLP, cosine matrix, threat taxonomy
-│   ├── osint_scraper.py       # OSINT profile extraction, Instaloader & offline cache
-│   ├── network_analyser.py    # NetworkX graph analysis (Degree Centrality, CIB cluster detection)
-│   ├── report_generator.py    # Forensic PDF case file generator (fpdf2, Sec. 65B legal format)
-│   └── requirements.txt       # Pinned production backend dependencies
-├── data/
-│   ├── raw/                   # Multi-platform research datasets (Cresci, Satish, LIMFADD)
-│   └── processed/             # Clean feature matrices (twitter_master.csv, meta_master.csv)
-├── feature_extractor/
-│   ├── build_twitter.py       # Twitter 13-feature ETL & ratio engineering
-│   └── build_meta.py          # Meta 7-feature ETL & ratio engineering
-├── frontend/                  # React 18 + TypeScript + Vite Dashboard
-│   ├── src/
-│   │   ├── App.tsx            # Main Dashboard (URL scanner, form, results, PDF export)
-│   │   ├── MediaAuditView.tsx # Live Scraped Post Gallery, Caption Uniformity & Threat Badges
-│   │   ├── NetworkGraph.tsx   # Interactive SVG force-directed threat network graph
-│   │   ├── BatchView.tsx      # Central Agency Batch CSV upload table
-│   │   ├── api.ts             # Axios client with 30s timeout for live scraping
-│   │   ├── presets.ts         # Verified telemetry profiles for Twitter and Meta
-│   │   └── types.ts           # TypeScript interfaces matching backend schemas
-│   ├── package.json           # React frontend dependencies
-│   └── vite.config.ts         # Vite dev server configuration
-├── models/
-│   ├── saved/                 # Tuned model binaries (twitter_xgboost_tuned.pkl, meta_xgboost_tuned.pkl)
-│   └── predict.py             # Dual-platform predictor & SHAP explainability engine
-├── PROJECT_SUMMARY.md         # Comprehensive engineering journey & hackathon defense guide
-└── README.md                  # Technical overview and deployment specifications
-```
-
----
-
-## ⚙️ Core Technical Capabilities
-
-### 1. Dual-Platform XGBoost Machine Learning (101,000+ Accounts)
-- **Twitter / X Model (13 Features, 90.04% Accuracy)**: `followers`, `following`, `post_count`, `verified`, `description_length`, `account_age_days`, `follower_following_ratio`, `reputation_score`, `username_length`, `digits_in_username`, `digit_ratio_username`, `has_url`, `posts_per_day`.
-- **Meta Model (7 Features, 96.87% Accuracy)**: `followers`, `following`, `post_count`, `has_profile_pic`, `bio_length`, `follower_following_ratio`, `reputation_score`.
-
-### 2. Zero-Shot Neural NLP & Phishing Engine (SentenceTransformer)
-- Runs local **`SentenceTransformer('all-MiniLM-L6-v2')`** with PyTorch Apple Silicon MPS / CPU acceleration (100% local, 0 token costs).
-- Computes **$N \times N$ Pairwise Cosine Similarity Matrices** across post captions and promotional flyers to mathematically detect automated bot syndication ($>80\%$ uniformity).
-- Evaluates 384-dimensional semantic embeddings against threat anchors for **Information Warfare, State Subversion, Hate Sloganeering, and Financial Scams**.
-
-### 3. Universal Identity Discrepancy & Impersonation Engine
-- **Token Overlap Math**: Tokenizes display name vs username handle. If display name claims an identity (e.g. `virat•kohli`) but the handle has $0\%$ token overlap (e.g. `@up9o_official_rohit_singh`), flags severe synthetic impersonation.
-- **Spoofing Moniker Detection**: Catches deceptive `official_`, `real_`, `support_` tokens on unverified handles.
-- **AI Persona Disclosures**: Flags profiles claiming `AI creator / Clone / Parody` while borrowing external celebrity identities.
-
-### 4. Coordinated Inauthentic Behavior (CIB) Network Graph
-- **NetworkX** graph theory calculations: Degree Centrality, Graph Density, and Clique Count.
-- Renders an interactive SVG constellation graph with glowing threat halos, node dragging, zoom controls, and coordination edge tooltips (*"Shared IP Subnet"*, *"Posting Synchronization <3s"*).
-
-### 5. Official ITBP / MHA Forensic PDF Export
-- Generates downloadable law-enforcement-grade case reports containing Target Summary Cards, SHAP Decision Attribution, Telemetry Tables with human baseline benchmarks, Multimodal & Phishing Forensics, and SHA256 integrity hashes for legal admissibility under **Section 65B of the Indian Evidence Act**.
-
----
-
-## 🔬 Benchmark Performance
-
-| Platform | Production Model | Training Dataset | Accuracy | F1-Score | Inference Latency |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **Twitter / X** | Tuned XGBoost | 64,919 Accounts | **90.04%** | **85.63%** | 0.18s |
-| **Meta (IG & FB)** | Tuned XGBoost | 36,383 Accounts | **96.87%** | **97.15%** | 0.12s |
-
----
-
-## 🔌 API Endpoints
-
-### 1. Single Account Telemetry Inference
 ```bash
-POST http://localhost:8000/analyze
-Content-Type: application/json
-
-{
-  "platform": "twitter",
-  "followers": 12,
-  "following": 4500,
-  "post_count": 5000,
-  "verified": 0,
-  "description_length": 0,
-  "account_age_days": 2,
-  "has_url": 1
-}
+.venv/bin/python -m pytest tests
+cd frontend && npm run build
 ```
 
-### 2. Live Profile URL Deep Scan
-```bash
-POST http://localhost:8000/analyze/url
-Content-Type: application/json
+The nine API tests cover the health check, scoring on both platforms (an obvious bot scores above an obvious human), request validation, CSV batch scoring and the case state machine (no skipping, no reopening a closed case, run against an in-memory database). CI runs these and the frontend build.
 
-{
-  "url": "https://www.instagram.com/stockstrading0/"
-}
-```
+## Limitations
 
-### 3. Forensic PDF Case File Download
-```bash
-POST http://localhost:8000/analyze/report
-Content-Type: application/json
+- The classifiers see only account counts and username shape. On the built-in "Mass-Spam X Bot" sample (12 followers, 4,500 following, 2 days old, 5,000 posts) the model answers "suspicious" at about 44, not "fake". Treat the score as a triage signal.
+- Live scraping depends on the platforms' markup and rate limits, and it uses a session cookie that the operator pastes in or captures from their own login. Scraping may be against a platform's terms. The scrapers were not exercised during the cleanup.
+- The PDF case file follows the layout of a Section 65B certificate, but nobody has reviewed it legally. The escalation workflow is a demo with made-up cases and is not connected to any agency or platform.
+- The training data is a mix of public datasets whose labels were not independently checked. Accuracy on accounts from a different period or platform behaviour may be lower.
+- `backend/main.py` still uses the Pydantic v1 `.dict()` call, which warns under Pydantic 2.
 
-{
-  "username": "stockstrading0",
-  "features": {...},
-  "prediction": {...}
-}
-```
+## License
 
-### 4. Bulk CSV Batch Upload
-```bash
-POST http://localhost:8000/analyze/batch/csv
-Content-Type: multipart/form-data
-File: demo_batch.csv
-```
+MIT, see [LICENSE](LICENSE).

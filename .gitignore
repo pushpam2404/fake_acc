@@ -9,9 +9,16 @@ env.bak/
 venv.bak/
 
 # ==============================================================================
-# IDE Skills & Agent Customizations
+# Local tool config and caches
 # ==============================================================================
 .agents/
+.claude/
+pyrightconfig.json
+.pytest_cache/
+
+# Downloaded profile pictures of the Twitter human/bot dataset (not used by any code)
+data/raw/twitter_humanbots/profile_images/
+data/raw/twitter_humanbots/profile_background_images/
 
 # ==============================================================================
 # Node.js & React Frontend Dependencies & Build Output

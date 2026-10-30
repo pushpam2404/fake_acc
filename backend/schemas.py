@@ -34,8 +34,10 @@ class AccountFeatures(BaseModel):
     digit_ratio_username: Optional[float] = 0.0
     has_url: Optional[int] = 0
     posts_per_day: Optional[float] = None
-    has_profile_pic: Optional[int] = 0
-    bio_length: Optional[int] = 0
+    # Meta-only fields. They default to None, not 0, because predict() reads their
+    # presence as "this is an Instagram/Facebook account" when platform is "auto".
+    has_profile_pic: Optional[int] = None
+    bio_length: Optional[int] = None
     platform: Optional[str] = "auto"
     username: Optional[str] = None
 

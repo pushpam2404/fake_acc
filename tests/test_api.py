@@ -55,6 +55,31 @@ def test_analyze_meta():
     assert r.json()["classification"] == "FAKE"
 
 
+def _without(payload, *keys):
+    return {k: v for k, v in payload.items() if k not in keys}
+
+
+def test_analyze_without_platform_uses_twitter_model_for_twitter_fields():
+    body = client.post("/analyze", json=_without(BOT_X, "platform")).json()
+    assert body["platform"] == "twitter"
+
+
+def test_analyze_without_platform_uses_meta_model_when_meta_fields_are_sent():
+    payload = {"followers": 2, "following": 2700, "post_count": 0,
+               "has_profile_pic": 0, "bio_length": 0}
+    assert client.post("/analyze", json=payload).json()["platform"] == "meta"
+
+
+def test_explicit_platform_is_not_overridden():
+    payload = {**_without(BOT_X, "platform"), "platform": "twitter", "bio_length": 0}
+    assert client.post("/analyze", json=payload).json()["platform"] == "twitter"
+
+
+def test_batch_without_platform_uses_twitter_model_for_twitter_fields():
+    r = client.post("/analyze/batch", json={"accounts": [_without(BOT_X, "platform")]})
+    assert r.json()["results"][0]["platform"] == "twitter"
+
+
 def test_analyze_rejects_missing_required_fields():
     assert client.post("/analyze", json={"followers": 1}).status_code == 422
 

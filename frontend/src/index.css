@@ -1,42 +1,48 @@
-/* ==============================================================================
-   EDITORIAL / MAGAZINE DESIGN SYSTEM — LIGHT PARCHMENT / BEIGE PAPER THEME
-   ============================================================================== */
+/* Fake account detector: a case file on an analyst's desk.
+   Warm paper neutrals, one manila-amber accent, IBM Plex for the interface and
+   figures, Newsreader only for the page title. Verdict colours carry meaning only. */
 :root {
-  --bg-dark: #f6f4ee;
-  --bg-panel: #ffffff;
-  --bg-card: #faf8f5;
-  --bg-card-hover: #f3efe6;
+  --bg-dark: #f7f4ee;
+  --bg-panel: #fdfbf7;
+  --bg-card: #f3efe7;
+  --bg-card-hover: #efe9df;
+  --bg-input: #f3efe7;
 
-  --border-subtle: #eee9df;
-  --border-default: #e2dbce;
-  --border-active: #b45309;
+  --border-subtle: rgba(31, 27, 22, 0.06);
+  --border-default: rgba(31, 27, 22, 0.1);
+  --border-active: #9a4a08;
 
-  --text-primary: #1c1917;
-  --text-secondary: #57534e;
-  --text-muted: #78716c;
+  --text-primary: #1f1b16;
+  --text-secondary: #5e554a;
+  --text-muted: #6f675c;
 
-  --accent-gold: #b45309;
-  --accent-amber: #d97706;
+  --accent-gold: #9a4a08;
+  --accent-amber: #9a4a08;
+  --accent-wash: rgba(154, 74, 8, 0.08);
   --accent-burgundy: #9f1239;
 
-  --color-fake: #dc2626;
-  --color-fake-bg: rgba(220, 38, 38, 0.08);
-  --color-fake-border: rgba(220, 38, 38, 0.3);
+  --color-fake: #b4232a;
+  --color-fake-bg: rgba(180, 35, 42, 0.07);
+  --color-fake-border: rgba(180, 35, 42, 0.22);
 
-  --color-suspicious: #d97706;
-  --color-suspicious-bg: rgba(217, 119, 6, 0.08);
-  --color-suspicious-border: rgba(217, 119, 6, 0.3);
+  --color-suspicious: #9a5b06;
+  --color-suspicious-bg: rgba(154, 91, 6, 0.08);
+  --color-suspicious-border: rgba(154, 91, 6, 0.24);
 
-  --color-real: #16a34a;
-  --color-real-bg: rgba(22, 163, 74, 0.08);
-  --color-real-border: rgba(22, 163, 74, 0.3);
+  --color-real: #1f7a45;
+  --color-real-bg: rgba(31, 122, 69, 0.07);
+  --color-real-border: rgba(31, 122, 69, 0.22);
 
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* --font-serif is kept as a name because the views use it inline; it now points at the interface face. */
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-serif: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: light;
 }
 
 * {
@@ -50,16 +56,22 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   min-height: 100vh;
-  line-height: 1.6;
-  background-image: radial-gradient(circle at 50% 0%, rgba(180, 83, 9, 0.04) 0%, transparent 60%);
-  background-attachment: fixed;
+  line-height: 1.55;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
 }
+
+::selection { background: rgba(154, 74, 8, 0.18); }
+:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 2px; border-radius: 4px; }
+
+.tnum { font-variant-numeric: tabular-nums; }
 
 /* Typography Hierarchy */
 h1, h2, h3, h4 {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.25;
 }
 
 .serif {
@@ -72,26 +84,24 @@ h1, h2, h3, h4 {
 
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--accent-gold);
-  margin-bottom: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
 }
 
 button {
   cursor: pointer;
   font-family: var(--font-sans);
   border: none;
-  outline: none;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.12s var(--ease);
 }
 
 input, select {
   font-family: var(--font-mono);
-  outline: none;
 }
+button:active:not(:disabled) { transform: scale(0.98); }
 
 /* Custom Clean Select Dropdown */
 .custom-select {
@@ -117,13 +127,13 @@ input, select {
   background: var(--bg-panel);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 30px rgba(28, 25, 23, 0.05);
+  box-shadow: 0 1px 2px rgba(31, 27, 22, 0.04);
 }
 
 .container {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 2.25rem 1.5rem;
+  padding: 32px 24px 64px;
 }
 
 /* Publication Header */
@@ -131,23 +141,27 @@ input, select {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 2.25rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--text-primary);
+  gap: 24px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--text-primary);
 }
 
 .publication-title {
-  font-size: 2.3rem;
-  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-family: var(--font-display);
+  font-weight: 400;
   color: var(--text-primary);
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 .publication-issue {
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   font-family: var(--font-sans);
   color: var(--text-secondary);
-  margin-top: 0.35rem;
+  margin-top: 8px;
+  max-width: 38rem;
 }
 
 .status-badge {
@@ -200,17 +214,19 @@ input, select {
 }
 
 .section-num {
-  font-family: var(--font-serif);
-  font-style: italic;
-  color: var(--accent-gold);
-  font-size: 1.1rem;
-  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-right: 10px;
 }
 
 .section-title {
-  font-size: 1.15rem;
-  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
   color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
 }
 
 /* Platform Switcher Tabs */
@@ -227,7 +243,7 @@ input, select {
   padding: 0.55rem 1rem;
   font-size: 0.85rem;
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   background: transparent;
   border-radius: var(--radius-sm);
@@ -238,9 +254,9 @@ input, select {
 }
 
 .tab-btn.active {
-  background: var(--text-primary);
-  color: #ffffff;
-  font-weight: 700;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(31, 27, 22, 0.08), inset 0 0 0 1px var(--border-default);
 }
 
 /* Presets Cards */
@@ -263,7 +279,7 @@ input, select {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease);
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -272,20 +288,18 @@ input, select {
 
 .preset-card:hover {
   background: var(--bg-card-hover);
-  border-color: var(--accent-gold);
-  box-shadow: 0 4px 12px rgba(28, 25, 23, 0.08);
+  border-color: rgba(31, 27, 22, 0.2);
 }
 
 .preset-name {
-  font-size: 0.85rem;
-  font-family: var(--font-serif);
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 0.35rem;
+  margin-bottom: 4px;
 }
 
 .preset-desc {
-  font-size: 0.73rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.45;
   display: block;
@@ -298,7 +312,7 @@ input, select {
 }
 
 .preset-card.active {
-  background: rgba(180, 83, 9, 0.08);
+  background: var(--accent-wash);
   border-color: var(--accent-gold);
 }
 
@@ -317,51 +331,52 @@ input, select {
 }
 
 .form-label {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .form-input {
   min-width: 0;
-  background: #ffffff;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  padding: 0.65rem 0.85rem;
+  background: #fffdf9;
+  border: 1px solid rgba(31, 27, 22, 0.14);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   font-size: 0.88rem;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.15s var(--ease);
 }
 
 .form-input:focus {
   border-color: var(--accent-gold);
-  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.1);
+  box-shadow: 0 0 0 3px rgba(154, 74, 8, 0.12);
+  outline: none;
 }
 
 /* Analyze Button */
 .analyze-btn {
   width: 100%;
-  margin-top: 1.5rem;
-  padding: 0.85rem;
+  margin-top: 24px;
+  min-height: 44px;
+  padding: 0 20px;
   background: var(--text-primary);
-  color: #ffffff;
-  font-size: 0.95rem;
-  font-family: var(--font-serif);
-  font-weight: 700;
-  border-radius: var(--radius-sm);
+  color: #fdfbf7;
+  font-size: 0.92rem;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(28, 25, 23, 0.15);
+  gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .analyze-btn:hover:not(:disabled) {
-  background: #292524;
-  transform: translateY(-1px);
+  background: #35302a;
 }
 
 .analyze-btn:disabled {
@@ -387,13 +402,13 @@ input, select {
 }
 
 .risk-badge {
-  padding: 0.45rem 1.1rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  font-weight: 500;
 }
 
 .risk-badge.FAKE {
@@ -416,7 +431,7 @@ input, select {
 
 /* Risk Score Bar */
 .meter-container {
-  margin-bottom: 1.75rem;
+  margin: 24px 0;
 }
 
 .meter-header {
@@ -430,16 +445,16 @@ input, select {
 
 .meter-bar-bg {
   width: 100%;
-  height: 9px;
-  background: var(--bg-dark);
+  height: 8px;
+  background: var(--bg-card);
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid var(--border-default);
 }
 
 .meter-bar-fill {
   height: 100%;
-  transition: width 0.5s ease;
+  transform-origin: left;
+  animation: meter-in 0.5s var(--ease) both;
 }
 
 .meter-bar-fill.FAKE {
@@ -457,9 +472,10 @@ input, select {
 /* Editorial Reasons List */
 .reasons-title {
   font-size: 1rem;
-  font-family: var(--font-serif);
+  font-weight: 500;
+  font-family: var(--font-sans);
   color: var(--text-primary);
-  margin-bottom: 0.85rem;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -473,11 +489,12 @@ input, select {
 }
 
 .reason-item {
-  padding: 0.75rem 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  padding: 12px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-default);
+  border-radius: 0;
+  font-size: 0.88rem;
   color: var(--text-secondary);
   display: flex;
   align-items: flex-start;
@@ -487,13 +504,13 @@ input, select {
 
 .reason-bullet {
   color: var(--accent-gold);
-  font-family: var(--font-sans);
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-weight: 500;
   font-size: 0.72rem;
-  background: rgba(180, 83, 9, 0.12);
-  border: 1px solid rgba(180, 83, 9, 0.25);
+  background: var(--accent-wash);
+  border: 1px solid rgba(154, 74, 8, 0.2);
   border-radius: 4px;
-  width: 20px;
+  min-width: 28px;
   height: 20px;
   display: flex;
   align-items: center;
@@ -547,18 +564,30 @@ input, select {
   gap: 0.5rem;
 }
 
-@keyframes pulse {
-  0% {
-    r: 10px;
-    opacity: 0.2;
-  }
-  50% {
-    r: 18px;
-    opacity: 0.6;
-  }
-  100% {
-    r: 10px;
-    opacity: 0.2;
-  }
-}
+@keyframes meter-in { from { transform: scaleX(0); } }
 
+/* Top navigation: quiet tabs, the active one is a raised surface. */
+.nav-tabs { display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+.nav-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 36px; padding: 0 14px; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 500;
+  color: var(--text-secondary); background: transparent;
+}
+.nav-tab svg { color: var(--text-muted); }
+.nav-tab:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-tab[aria-current='page'] { background: var(--bg-panel); color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--border-default), 0 1px 2px rgba(31, 27, 22, 0.05); }
+.nav-tab[aria-current='page'] svg { color: var(--accent-gold); }
+
+.btn-secondary { background: var(--bg-panel) !important; color: var(--text-primary) !important; box-shadow: inset 0 0 0 1px rgba(31, 27, 22, 0.16) !important; }
+.btn-secondary:hover:not(:disabled) { background: var(--bg-card) !important; }
+
+/* The score: the one figure on the screen that matters. */
+.score { display: flex; align-items: baseline; gap: 6px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.score-value { font-size: 2.75rem; line-height: 1; font-weight: 400; color: var(--text-primary); letter-spacing: -0.02em; }
+.score-scale { font-size: 0.9rem; color: var(--text-muted); }
+.meter-scale { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; font-family: var(--font-mono); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

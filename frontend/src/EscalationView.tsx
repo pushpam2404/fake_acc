@@ -23,20 +23,20 @@ const NEXT_STATUS: Partial<Record<CaseStatus, CaseStatus>> = {
 
 const STATUS_LABELS: Record<CaseStatus, string> = {
   FLAGGED: 'Flagged',
-  UNDER_REVIEW: 'Under Review',
-  REPORT_SENT: 'Report Sent',
-  TAKEDOWN_CONFIRMED: 'Takedown Confirmed',
+  UNDER_REVIEW: 'Under review',
+  REPORT_SENT: 'Report sent',
+  TAKEDOWN_CONFIRMED: 'Takedown confirmed',
 };
 
 const STATUS_COLORS: Record<CaseStatus, { color: string; bg: string; border: string }> = {
-  FLAGGED:            { color: '#dc2626', bg: 'rgba(220,38,38,0.10)',   border: 'rgba(220,38,38,0.30)'   },
-  UNDER_REVIEW:       { color: '#d97706', bg: 'rgba(217,119,6,0.10)',   border: 'rgba(217,119,6,0.30)'   },
-  REPORT_SENT:        { color: '#6366f1', bg: 'rgba(99,102,241,0.10)',  border: 'rgba(99,102,241,0.30)'  },
-  TAKEDOWN_CONFIRMED: { color: '#16a34a', bg: 'rgba(22,163,74,0.10)',   border: 'rgba(22,163,74,0.30)'   },
+  FLAGGED:            { color: '#b4232a', bg: 'rgba(180,35,42,0.10)',   border: 'rgba(180,35,42,0.30)'   },
+  UNDER_REVIEW:       { color: '#9a5b06', bg: 'rgba(154,91,6,0.10)',   border: 'rgba(154,91,6,0.30)'   },
+  REPORT_SENT:        { color: '#5e554a', bg: 'rgba(94,85,74,0.10)',  border: 'rgba(94,85,74,0.30)'  },
+  TAKEDOWN_CONFIRMED: { color: '#1f7a45', bg: 'rgba(31,122,69,0.10)',   border: 'rgba(31,122,69,0.30)'   },
 };
 
 const RISK_COLOR = (score: number) =>
-  score >= 65 ? '#dc2626' : score >= 35 ? '#d97706' : '#16a34a';
+  score >= 65 ? '#b4232a' : score >= 35 ? '#9a5b06' : '#1f7a45';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
@@ -55,7 +55,7 @@ function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id
         <div key={t.id} style={{
           display: 'flex', alignItems: 'center', gap: '0.65rem',
           padding: '0.75rem 1rem',
-          background: t.type === 'error' ? 'rgba(220,38,38,0.95)' : t.type === 'success' ? 'rgba(22,163,74,0.95)' : 'rgba(28,25,23,0.93)',
+          background: t.type === 'error' ? '#1f1b16' : t.type === 'success' ? '#1f1b16' : 'rgba(31,27,22,0.93)',
           color: '#fff',
           borderRadius: '6px',
           fontSize: '0.83rem',
@@ -89,10 +89,8 @@ function StatusBadge({ status }: { status: CaseStatus }) {
       padding: '3px 9px',
       borderRadius: '4px',
       fontSize: '0.72rem',
-      fontWeight: 700,
+      fontWeight: 600,
       fontFamily: 'var(--font-sans)',
-      letterSpacing: '0.04em',
-      textTransform: 'uppercase' as const,
       color: c.color,
       background: c.bg,
       border: `1px solid ${c.border}`,
@@ -111,72 +109,25 @@ function StatusBadge({ status }: { status: CaseStatus }) {
 
 function SummaryStrip({ summary, loading }: { summary: CaseSummary | null; loading: boolean }) {
   const cards = [
+    { label: 'Opened', value: summary?.total_flagged ?? '—', note: 'all cases' },
+    { label: 'Waiting for review', value: summary?.pending_review ?? '—', note: 'not yet picked up' },
+    { label: 'Reports sent', value: summary?.reports_sent ?? '—', note: 'to the agency' },
     {
-      label: 'Total Escalated',
-      value: summary?.total_flagged ?? '—',
-      icon: <Scale size={20} color="#b45309" />,
-      color: '#b45309',
-    },
-    {
-      label: 'Pending Review',
-      value: summary?.pending_review ?? '—',
-      icon: <Clock size={20} color="#d97706" />,
-      color: '#d97706',
-    },
-    {
-      label: 'Reports Sent',
-      value: summary?.reports_sent ?? '—',
-      icon: <FileText size={20} color="#6366f1" />,
-      color: '#6366f1',
-    },
-    {
-      label: 'Avg. Time-to-Takedown',
-      value: summary?.avg_time_to_takedown_hours != null
-        ? `${summary.avg_time_to_takedown_hours.toFixed(1)}h`
-        : 'N/A',
-      icon: <TrendingUp size={20} color="#16a34a" />,
-      color: '#16a34a',
+      label: 'Time to takedown',
+      value: summary?.avg_time_to_takedown_hours != null ? `${summary.avg_time_to_takedown_hours.toFixed(1)} h` : '—',
+      note: 'average, confirmed cases',
     },
   ];
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(4, 1fr)',
-      gap: '1rem',
-      marginBottom: '1.75rem',
-    }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
       {cards.map((c, i) => (
-        <div key={i} style={{
-          background: 'var(--bg-panel)',
-          border: '1px solid var(--border-default)',
-          borderRadius: '8px',
-          padding: '1.1rem 1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 2px 8px rgba(28,25,23,0.05)',
-          transition: 'box-shadow 0.2s',
-        }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '8px',
-            background: `${c.color}18`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>{c.icon}</div>
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
-              {c.label}
-            </div>
-            <div style={{
-              fontSize: loading ? '1rem' : '1.5rem',
-              fontFamily: 'var(--font-serif)',
-              fontWeight: 700,
-              color: loading ? 'var(--text-muted)' : 'var(--text-primary)',
-            }}>
-              {loading ? '…' : c.value}
-            </div>
+        <div key={i} style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px 20px' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>{c.label}</div>
+          <div className="tnum" style={{ fontSize: '1.75rem', lineHeight: 1, fontFamily: 'var(--font-mono)', color: loading ? 'var(--text-muted)' : 'var(--text-primary)' }}>
+            {loading ? '…' : c.value}
           </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '8px' }}>{c.note}</div>
         </div>
       ))}
     </div>
@@ -199,7 +150,7 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 8000,
-      background: 'rgba(28,25,23,0.55)',
+      background: 'rgba(31,27,22,0.55)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1.5rem',
     }} onClick={onClose}>
@@ -211,7 +162,7 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
         maxWidth: '680px',
         maxHeight: '88vh',
         overflowY: 'auto',
-        boxShadow: '0 20px 60px rgba(28,25,23,0.18)',
+        boxShadow: '0 20px 60px rgba(31,27,22,0.18)',
       }} onClick={e => e.stopPropagation()}>
 
         {/* Report Header */}
@@ -221,9 +172,9 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
         }}>
           <div>
-            <div className="eyebrow">CENTRAL AGENCY TAKEDOWN REPORT</div>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginTop: '0.2rem' }}>
-              Formal Escalation Notice
+            <div className="eyebrow">Takedown report</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.5rem', marginTop: '2px' }}>
+              Escalation notice
             </h2>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem', fontFamily: 'var(--font-mono)' }}>
               Case ID: {report.case_id} &nbsp;·&nbsp; Generated: {formatDate(report.generated_at)}
@@ -243,7 +194,7 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
                 fontWeight: 600,
                 color: 'var(--text-secondary)',
               }}>
-              {copied ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+              {copied ? <Check size={14} color="#1f7a45" /> : <Copy size={14} />}
               {copied ? 'Copied!' : 'Copy JSON'}
             </button>
             <button
@@ -274,23 +225,23 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
           {/* Target */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             {[
-              ['Target Handle', `@${report.handle}`],
+              ['Handle', `@${report.handle}`],
               ['Platform', report.platform.toUpperCase()],
               ['Classification', report.classification],
-              ['Risk Score', `${report.risk_score.toFixed(2)} / 100`],
-              ['Current Status', STATUS_LABELS[report.status as CaseStatus] ?? report.status],
+              ['Risk score', `${report.risk_score.toFixed(2)} / 100`],
+              ['Status', STATUS_LABELS[report.status as CaseStatus] ?? report.status],
             ].map(([label, val]) => (
               <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.75rem 1rem' }}>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>{label}</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{val}</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>{label}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{val}</div>
               </div>
             ))}
           </div>
 
           {/* Evidence Summary */}
           <div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <BookOpen size={16} color="#b45309" /> Evidence Summary
+            <h4 style={{ fontSize: '1rem', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <BookOpen size={16} color="#9a4a08" /> Evidence Summary
             </h4>
             <div style={{
               background: 'var(--bg-card)', border: '1px solid var(--border-default)',
@@ -304,7 +255,7 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
 
           {/* SHAP Reasons */}
           <div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', marginBottom: '0.65rem' }}>
+            <h4 style={{ fontSize: '1rem', marginBottom: '0.65rem' }}>
               SHAP Forensic Indicators
             </h4>
             <ul className="reasons-list">
@@ -319,12 +270,12 @@ function ReportModal({ report, onClose }: { report: CaseReport; onClose: () => v
 
           {/* Legal Basis */}
           <div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', marginBottom: '0.65rem' }}>
+            <h4 style={{ fontSize: '1rem', marginBottom: '0.65rem' }}>
               Legal Basis
             </h4>
             <div style={{
-              background: 'rgba(99,102,241,0.06)',
-              border: '1px solid rgba(99,102,241,0.25)',
+              background: 'rgba(94,85,74,0.06)',
+              border: '1px solid rgba(94,85,74,0.25)',
               borderRadius: '6px',
               padding: '1rem 1.1rem',
               fontSize: '0.8rem',
@@ -395,7 +346,7 @@ function CaseDrawer({
     <>
       {/* Backdrop */}
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 5000, background: 'rgba(28,25,23,0.4)' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 5000, background: 'rgba(31,27,22,0.4)' }}
         onClick={onClose}
       />
 
@@ -405,7 +356,7 @@ function CaseDrawer({
         width: 'min(520px, 92vw)',
         background: 'var(--bg-panel)',
         borderLeft: '1px solid var(--border-default)',
-        boxShadow: '-8px 0 40px rgba(28,25,23,0.12)',
+        boxShadow: '-8px 0 40px rgba(31,27,22,0.12)',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
@@ -420,8 +371,8 @@ function CaseDrawer({
           background: 'var(--bg-card)',
         }}>
           <div>
-            <div className="eyebrow">Case Detail</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', marginTop: '0.15rem' }}>
+            <div className="eyebrow">Case</div>
+            <h3 style={{ fontSize: '1.15rem', marginTop: '0.15rem' }}>
               @{caseItem.handle}
             </h3>
             <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: '3px', fontFamily: 'var(--font-mono)' }}>
@@ -439,33 +390,33 @@ function CaseDrawer({
           {/* Quick Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.75rem' }}>
-              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Risk Score</div>
-              <div style={{ fontSize: '1.2rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: RISK_COLOR(caseItem.risk_score) }}>{caseItem.risk_score.toFixed(1)}</div>
+              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Risk score</div>
+              <div style={{ fontSize: '1.2rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: RISK_COLOR(caseItem.risk_score) }}>{caseItem.risk_score.toFixed(1)}</div>
             </div>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.75rem' }}>
-              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Classification</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: caseItem.classification === 'FAKE' ? '#dc2626' : '#d97706' }}>{caseItem.classification}</div>
+              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Classification</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: caseItem.classification === 'FAKE' ? '#b4232a' : '#9a5b06' }}>{caseItem.classification === 'FAKE' ? 'Likely fake' : 'Suspicious'}</div>
             </div>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.75rem' }}>
-              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Flagged</div>
+              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Flagged</div>
               <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{formatDate(caseItem.created_at)}</div>
             </div>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.75rem' }}>
-              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Reviewed By</div>
+              <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Reviewed by</div>
               <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{caseItem.reviewed_by ?? 'Unassigned'}</div>
             </div>
           </div>
 
           {/* Current Status */}
           <div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Current Status</div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Status</div>
             <StatusBadge status={caseItem.status} />
           </div>
 
           {/* SHAP Reasons */}
           <div>
             <h4 className="reasons-title" style={{ fontSize: '0.92rem' }}>
-              <BookOpen size={15} color="#b45309" /> SHAP Decision Attribution
+              <BookOpen size={15} color="#9a4a08" /> SHAP Decision Attribution
             </h4>
             <ul className="reasons-list">
               {caseItem.reasons.map((r, i) => (
@@ -480,7 +431,7 @@ function CaseDrawer({
           {/* Reviewed By Input */}
           {nextStatus && (
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
                 Officer Name (for audit log)
               </div>
               <input
@@ -507,11 +458,11 @@ function CaseDrawer({
                 border: 'none',
                 borderRadius: '5px',
                 fontFamily: 'var(--font-serif)',
-                fontWeight: 700,
+                fontWeight: 600,
                 fontSize: '0.9rem',
                 opacity: updating ? 0.6 : 1,
                 cursor: updating ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
               }}>
               {updating ? <div className="spinner" /> : <ChevronRight size={16} />}
               Advance to: {STATUS_LABELS[nextStatus]}
@@ -526,7 +477,7 @@ function CaseDrawer({
               border: `1px solid ${STATUS_COLORS.TAKEDOWN_CONFIRMED.border}`,
               borderRadius: '5px',
               color: STATUS_COLORS.TAKEDOWN_CONFIRMED.color,
-              fontWeight: 700, fontSize: '0.85rem',
+              fontWeight: 600, fontSize: '0.85rem',
             }}>
               <CheckCircle2 size={15} /> Takedown Confirmed — case closed
             </div>
@@ -540,16 +491,16 @@ function CaseDrawer({
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
               padding: '0.7rem',
               background: 'var(--bg-card)',
-              color: '#6366f1',
-              border: '1px solid rgba(99,102,241,0.35)',
+              color: '#5e554a',
+              border: '1px solid rgba(94,85,74,0.35)',
               borderRadius: '5px',
               fontFamily: 'var(--font-serif)',
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: '0.88rem',
               opacity: generatingReport ? 0.6 : 1,
             }}>
-            {generatingReport ? <div className="spinner" style={{ borderTopColor: '#6366f1', borderColor: 'rgba(99,102,241,0.3)' }} /> : <FileText size={15} />}
-            {caseItem.report_generated ? 'Re-generate Report' : 'Generate Formal Report'}
+            {generatingReport ? <div className="spinner" style={{ borderTopColor: '#5e554a', borderColor: 'rgba(94,85,74,0.3)' }} /> : <FileText size={15} />}
+            {caseItem.report_generated ? 'Re-generate Report' : 'Generate report'}
           </button>
 
         </div>
@@ -615,12 +566,12 @@ export function EscalationView({
     <div style={{ padding: '0' }}>
       {/* Header */}
       <div style={{ marginBottom: '1.75rem' }}>
-        <div className="eyebrow">ITBP / MHA — IT Rules 2021, Rule 3(1)(d)</div>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.65rem', color: 'var(--text-primary)', marginTop: '0.15rem' }}>
-          Central Agency Escalation Centre
+        <div className="eyebrow">IT Rules 2021, Rule 3(1)(d)</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.75rem', color: 'var(--text-primary)', marginTop: '2px', letterSpacing: '-0.01em' }}>
+          Cases
         </h2>
         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.35rem', maxWidth: '600px', lineHeight: 1.6 }}>
-          Downstream escalation pipeline for flagged accounts. Tracks case status from detection through agency review, report generation, and platform takedown confirmation.
+          Accounts opened for review. Each case moves from detection to agency review, a written report and, if it happens, a confirmed takedown.
         </p>
       </div>
 
@@ -628,7 +579,7 @@ export function EscalationView({
       <SummaryStrip summary={summary} loading={loadingSummary} />
 
       {/* Cases Table */}
-      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-default)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(28,25,23,0.05)' }}>
+      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-default)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(31,27,22,0.05)' }}>
         {/* Table Toolbar */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -637,13 +588,13 @@ export function EscalationView({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Scale size={16} color="var(--accent-gold)" />
-            <span style={{ fontSize: '0.9rem', fontFamily: 'var(--font-serif)', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Escalated Cases
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Open cases
             </span>
             <span style={{
-              fontSize: '0.7rem', fontWeight: 700,
-              background: 'rgba(180,83,9,0.12)', color: '#b45309',
-              border: '1px solid rgba(180,83,9,0.25)',
+              fontSize: '0.7rem', fontWeight: 600,
+              background: 'rgba(154,74,8,0.12)', color: '#9a4a08',
+              border: '1px solid rgba(154,74,8,0.25)',
               borderRadius: '12px', padding: '2px 8px',
             }}>{filtered.length}</span>
           </div>
@@ -656,7 +607,7 @@ export function EscalationView({
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as CaseStatus | 'ALL')}
             >
-              <option value="ALL">All Statuses</option>
+              <option value="ALL">All statuses</option>
               {STATUS_ORDER.map(s => (
                 <option key={s} value={s}>{STATUS_LABELS[s]}</option>
               ))}
@@ -683,14 +634,12 @@ export function EscalationView({
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--bg-card)' }}>
-                {['Handle', 'Platform', 'Risk Score', 'Classification', 'Status', 'Flagged', 'Actions'].map(h => (
+                {['Handle', 'Platform', 'Risk score', 'Classification', 'Status', 'Flagged', 'Actions'].map(h => (
                   <th key={h} style={{
                     padding: '0.7rem 1rem',
                     textAlign: 'left',
                     fontSize: '0.68rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.07em',
+                    fontWeight: 600,
                     color: 'var(--text-muted)',
                     borderBottom: '1px solid var(--border-default)',
                     whiteSpace: 'nowrap',
@@ -703,7 +652,7 @@ export function EscalationView({
                 <tr>
                   <td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                      <div className="spinner" style={{ borderTopColor: '#b45309', borderColor: 'rgba(180,83,9,0.2)' }} />
+                      <div className="spinner" style={{ borderTopColor: '#9a4a08', borderColor: 'rgba(154,74,8,0.2)' }} />
                       Loading cases…
                     </div>
                   </td>
@@ -731,22 +680,22 @@ export function EscalationView({
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-card-hover)')}
                       onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? 'var(--bg-panel)' : 'var(--bg-card)')}
                     >
-                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
                         @{c.handle}
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <span style={{
-                          fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
+                          fontSize: '0.7rem', fontWeight: 600,
                           background: 'var(--bg-dark)', border: '1px solid var(--border-default)',
                           borderRadius: '3px', padding: '2px 7px', color: 'var(--text-secondary)',
-                        }}>{c.platform === 'twitter' ? 'X / Twitter' : 'Meta'}</span>
+                        }}>{c.platform === 'twitter' ? 'X' : 'Meta'}</span>
                       </td>
-                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.88rem', color: RISK_COLOR(c.risk_score) }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.88rem', color: RISK_COLOR(c.risk_score) }}>
                         {c.risk_score.toFixed(1)}
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: c.classification === 'FAKE' ? '#dc2626' : '#d97706' }}>
-                          {c.classification}
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: c.classification === 'FAKE' ? '#b4232a' : '#9a5b06' }}>
+                          {c.classification === 'FAKE' ? 'Likely fake' : c.classification === 'SUSPICIOUS' ? 'Suspicious' : 'Likely real'}
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
@@ -788,7 +737,7 @@ export function EscalationView({
                                 background: nextC.bg,
                                 fontSize: '0.72rem', fontWeight: 600, color: nextC.color,
                               }}>
-                              → {STATUS_LABELS[nextS].split(' ')[0]}
+                              Move to {STATUS_LABELS[nextS].toLowerCase()}
                             </button>
                           )}
                         </div>

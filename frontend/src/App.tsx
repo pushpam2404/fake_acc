@@ -5,7 +5,7 @@ import { AccountFeatures, AnalyzeResponse, CaseCreate } from './types';
 import { SessionManager } from './SessionManager';
 import { EscalationView } from './EscalationView';
 import { BatchView } from './BatchView';
-import { CheckCircle2, AlertTriangle, XCircle, Search, BookOpen, RotateCcw, FileDown, Sparkles, Shield, LayoutDashboard, KeyRound, Scale, BarChart3 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Search, RotateCcw, FileDown, Shield, LayoutDashboard, KeyRound, Scale, BarChart3 } from 'lucide-react';
 import { NetworkGraph } from './NetworkGraph';
 import { MediaAuditView } from './MediaAuditView';
 import './index.css';
@@ -151,7 +151,7 @@ export default function App() {
         reasons: result.reasons ?? [],
       };
       await createCase(payload);
-      setEscalateToast({ msg: `@${payload.handle} escalated to Central Agency ✓`, type: 'success' });
+      setEscalateToast({ msg: `@${payload.handle} opened as a case`, type: 'success' });
       setTimeout(() => setEscalateToast(null), 4000);
     } catch (e: any) {
       setEscalateToast({ msg: e?.response?.data?.detail ?? 'Escalation failed', type: 'error' });
@@ -167,49 +167,30 @@ export default function App() {
       {/* PUBLICATION EDITORIAL HEADER */}
       <header className="app-header">
         <div>
-          <div className="eyebrow">CYBER THREAT INTELLIGENCE</div>
-          <h1 className="publication-title">The Bot & Threat Detector</h1>
-          <div className="publication-issue">Automated Multi-Platform Profile Forensic & Inauthentic Behavior Analysis</div>
+          <div className="eyebrow">Case file · X, Instagram, Facebook</div>
+          <h1 className="publication-title">Fake account detector</h1>
+          <div className="publication-issue">Score a social media profile for bot or fake behaviour, see which signals drove the score, and open a case when it needs review</div>
         </div>
       </header>
 
       {/* TOP NAVIGATION TABS */}
-      <div style={{
-        display: 'flex',
-        gap: '0.75rem',
-        marginBottom: '1.75rem',
-        borderBottom: '1px solid var(--border-default)',
-        paddingBottom: '0.75rem',
-        flexWrap: 'wrap' as const,
-      }}>
+      <nav className="nav-tabs" aria-label="Sections">
         {([
-          { key: 'scan',       label: 'Real-Time URL & Telemetry Scan', icon: <LayoutDashboard size={16} /> },
-          { key: 'batch',      label: 'Batch CSV Analysis',             icon: <BarChart3 size={16} /> },
-          { key: 'escalation', label: 'Central Agency Cases',           icon: <Scale size={16} /> },
-          { key: 'sessions',   label: 'Platform Sessions & Auth',       icon: <KeyRound size={16} /> },
+          { key: 'scan',       label: 'Scan a profile', icon: <LayoutDashboard size={16} strokeWidth={1.5} /> },
+          { key: 'batch',      label: 'Batch CSV',      icon: <BarChart3 size={16} strokeWidth={1.5} /> },
+          { key: 'escalation', label: 'Cases',          icon: <Scale size={16} strokeWidth={1.5} /> },
+          { key: 'sessions',   label: 'Sessions',       icon: <KeyRound size={16} strokeWidth={1.5} /> },
         ] as const).map(({ key, label, icon }) => (
           <button
             key={key}
+            className="nav-tab"
+            aria-current={activeTab === key ? 'page' : undefined}
             onClick={() => setActiveTab(key)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.6rem 1.1rem',
-              borderRadius: '6px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              border: activeTab === key ? '1px solid var(--accent-gold)' : '1px solid var(--border-default)',
-              background: activeTab === key ? 'rgba(180,83,9,0.08)' : 'var(--bg-card)',
-              color: activeTab === key ? 'var(--accent-gold)' : 'var(--text-secondary)',
-              transition: 'all 0.2s',
-            }}
           >
             {icon} {label}
           </button>
         ))}
-      </div>
+      </nav>
 
       {activeTab === 'scan' && (
         <div className="dashboard-grid">
@@ -218,7 +199,7 @@ export default function App() {
           {/* SECTION 00: PROFILE URL SCAN */}
           <div className="section-header">
             <h2 className="section-title">
-              <span className="section-num">01 /</span> Scan Active Profile Link
+              <span className="section-num">01</span> Profile link
             </h2>
           </div>
 
@@ -226,7 +207,7 @@ export default function App() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
-                placeholder="e.g. https://x.com/username or https://instagram.com/username"
+                placeholder="https://x.com/handle"
                 className="form-input"
                 style={{ flex: 1, margin: 0 }}
                 value={profileUrl}
@@ -240,22 +221,22 @@ export default function App() {
               >
                 {scraping ? (
                   <>
-                    <div className="spinner" /> Analyzing...
+                    <div className="spinner" /> Scanning
                   </>
                 ) : (
-                  'Deep Scan URL'
+                  'Scan profile'
                 )}
               </button>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '6px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-              <span>Supports public Instagram, X, and Facebook profile URLs</span>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <span>Public Instagram, X and Facebook profiles</span>
             </div>
           </div>
 
           {/* SECTION 01: PLATFORM SELECTION */}
           <div className="section-header">
             <h2 className="section-title">
-              <span className="section-num">02 /</span> Target Platform Context
+              <span className="section-num">02</span> Platform
             </h2>
           </div>
 
@@ -277,7 +258,7 @@ export default function App() {
           {/* SECTION 02: PRESETS */}
           <div className="section-header">
             <h3 className="section-title">
-              <span className="section-num">03 /</span> Sample Telemetry Profiles
+              <span className="section-num">03</span> Sample accounts
             </h3>
           </div>
 
@@ -298,13 +279,13 @@ export default function App() {
           {/* SECTION 03: FORM METRICS */}
           <div className="section-header">
             <h3 className="section-title">
-              <span className="section-num">04 /</span> Account Telemetry Metrics
+              <span className="section-num">04</span> Account metrics
             </h3>
           </div>
 
           <div className="form-grid">
             <div className="form-group">
-              <label className="form-label">Followers Count</label>
+              <label className="form-label">Followers</label>
               <input
                 type="number"
                 className="form-input"
@@ -314,7 +295,7 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Following Count</label>
+              <label className="form-label">Following</label>
               <input
                 type="number"
                 className="form-input"
@@ -324,7 +305,7 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Total Posts Count</label>
+              <label className="form-label">Posts</label>
               <input
                 type="number"
                 className="form-input"
@@ -336,7 +317,7 @@ export default function App() {
             {platform === 'twitter' ? (
               <>
                 <div className="form-group">
-                  <label className="form-label">Account Age (Days)</label>
+                  <label className="form-label">Account age, days</label>
                   <input
                     type="number"
                     className="form-input"
@@ -346,19 +327,19 @@ export default function App() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Verified Badge (0/1)</label>
+                  <label className="form-label">Verified</label>
                   <select
                     className="form-input custom-select"
                     value={formData.verified || 0}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('verified', parseInt(e.target.value))}
                   >
-                    <option value={0}>0 (Unverified)</option>
-                    <option value={1}>1 (Verified Blue Check)</option>
+                    <option value={0}>No</option>
+                    <option value={1}>Yes, verified badge</option>
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Username Handle</label>
+                  <label className="form-label">Handle</label>
                   <input
                     type="text"
                     className="form-input"
@@ -370,19 +351,19 @@ export default function App() {
             ) : (
               <>
                 <div className="form-group">
-                  <label className="form-label">Profile Picture (0/1)</label>
+                  <label className="form-label">Profile picture</label>
                   <select
                     className="form-input custom-select"
                     value={formData.has_profile_pic || 0}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('has_profile_pic', parseInt(e.target.value))}
                   >
-                    <option value={0}>0 (Default Avatar)</option>
-                    <option value={1}>1 (Valid Avatar)</option>
+                    <option value={0}>Default avatar</option>
+                    <option value={1}>Own photo</option>
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Bio Description Length</label>
+                  <label className="form-label">Bio length, characters</label>
                   <input
                     type="number"
                     className="form-input"
@@ -398,22 +379,22 @@ export default function App() {
             <button className="analyze-btn" onClick={handleAnalyze} disabled={loading} style={{ flex: "1 1 14rem", marginTop: 0 }}>
               {loading ? (
                 <>
-                  <div className="spinner" /> Analyzing...
+                  <div className="spinner" /> Scoring
                 </>
               ) : (
                 <>
-                  <Search size={18} /> Analyze Account Security Risk
+                  <Search size={16} strokeWidth={1.5} /> Score account
                 </>
               )}
             </button>
 
             <button
-              className="analyze-btn"
+              className="analyze-btn btn-secondary"
               onClick={handleReset}
-              style={{ width: "auto", marginTop: 0, background: "var(--bg-card)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}
-              title="Reset Results"
+              style={{ width: "auto", marginTop: 0 }}
+              title="Clear the result"
             >
-              <RotateCcw size={16} /> Reset
+              <RotateCcw size={16} strokeWidth={1.5} /> Reset
             </button>
           </div>
         </div>
@@ -432,17 +413,15 @@ export default function App() {
               {/* CLASSIFICATION BADGE */}
               <div className="classification-header">
                 <div>
-                  <div className="eyebrow" style={{ fontSize: '0.65rem' }}>
-                    CONTEXT: {result.platform.toUpperCase()}
-                  </div>
-                  <h2 style={{ fontSize: '1.6rem', marginTop: '0.15rem' }}>Analysis Finding</h2>
+                  <div className="eyebrow">{result.platform === 'twitter' ? 'X' : result.platform === 'meta' ? 'Instagram and Facebook' : result.platform} model</div>
+                  <h2 style={{ fontSize: '1.25rem', marginTop: '2px' }}>Finding</h2>
                 </div>
 
                 <div className={`risk-badge ${result.classification}`}>
-                  {result.classification === 'FAKE' && <XCircle size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />}
-                  {result.classification === 'SUSPICIOUS' && <AlertTriangle size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />}
-                  {result.classification === 'REAL' && <CheckCircle2 size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />}
-                  {result.classification}
+                  {result.classification === 'FAKE' && <XCircle size={16} strokeWidth={1.5} style={{ marginRight: '6px' }} />}
+                  {result.classification === 'SUSPICIOUS' && <AlertTriangle size={16} strokeWidth={1.5} style={{ marginRight: '6px' }} />}
+                  {result.classification === 'REAL' && <CheckCircle2 size={16} strokeWidth={1.5} style={{ marginRight: '6px' }} />}
+                  {result.classification === 'FAKE' ? 'Likely fake' : result.classification === 'SUSPICIOUS' ? 'Suspicious' : 'Likely real'}
                 </div>
               </div>
 
@@ -460,12 +439,12 @@ export default function App() {
                   fontSize: '0.85rem',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--text-muted)', minWidth: '110px' }}>Handle:</span>
+                    <span style={{ color: 'var(--text-muted)', minWidth: '110px' }}>Handle</span>
                     <span className="mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>@{result.username}</span>
                   </div>
                   {result.display_name && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ color: 'var(--text-muted)', minWidth: '110px' }}>Display Name:</span>
+                      <span style={{ color: 'var(--text-muted)', minWidth: '110px' }}>Display name</span>
                       <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{result.display_name}</span>
                     </div>
                   )}
@@ -474,10 +453,16 @@ export default function App() {
 
               {/* RISK SCORE METER */}
               <div className="meter-container">
-                <div className="meter-header">
-                  <span>Assessed Risk Score</span>
-                  <span className="mono" style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 700 }}>
-                    {result.risk_score.toFixed(2)} / 100
+                <div className="meter-header" style={{ alignItems: 'flex-end', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Risk score</div>
+                    <div className="score">
+                      <span className="score-value">{result.risk_score.toFixed(1)}</span>
+                      <span className="score-scale">/ 100</span>
+                    </div>
+                  </div>
+                  <span className="mono tnum" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    model confidence {Math.round(result.confidence * 100)}%
                   </span>
                 </div>
                 <div className="meter-bar-bg">
@@ -486,22 +471,21 @@ export default function App() {
                     style={{ width: `${Math.min(100, Math.max(0, result.risk_score))}%` }}
                   />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                  <span>0% (Authentic)</span>
-                  <span>Confidence: {(result.confidence * 100).toFixed(2)}%</span>
-                  <span>100% (Fake/Bot)</span>
+                <div className="meter-scale">
+                  <span>0 authentic</span>
+                  <span>100 fake or bot</span>
                 </div>
               </div>
 
               {/* SHAP EXPLANATION REASONS */}
               <div>
                 <h3 className="reasons-title">
-                  <BookOpen size={18} color="#b45309" /> SHAP Decision Attribution
+                  Why this score <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>SHAP, strongest first</span>
                 </h3>
                 <ul className="reasons-list">
                   {result.reasons.map((reason: string, idx: number) => (
                     <li key={idx} className="reason-item">
-                      <div className="reason-bullet">{idx + 1}</div>
+                      <div className="reason-bullet">{String(idx + 1).padStart(2, '0')}</div>
                       <span>{reason}</span>
                     </li>
                   ))}
@@ -532,62 +516,33 @@ export default function App() {
                     className="analyze-btn"
                     onClick={handleEscalate}
                     disabled={escalateLoading}
-                    style={{
-                      width: '100%',
-                      marginTop: 0,
-                      background: result.classification === 'FAKE'
-                        ? 'rgba(220,38,38,0.12)'
-                        : 'rgba(217,119,6,0.12)',
-                      color: result.classification === 'FAKE' ? '#dc2626' : '#d97706',
-                      border: `1px solid ${result.classification === 'FAKE' ? 'rgba(220,38,38,0.35)' : 'rgba(217,119,6,0.35)'}`,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      alignItems: 'center',
-                      fontWeight: 700,
-                      borderRadius: '4px',
-                      padding: '0.7rem',
-                      fontSize: '0.88rem',
-                    }}
+                    style={{ width: '100%', marginTop: 0 }}
                   >
                     {escalateLoading
-                      ? <><div className="spinner" style={{ borderTopColor: result.classification === 'FAKE' ? '#dc2626' : '#d97706', borderColor: 'rgba(0,0,0,0.1)' }} /> Escalating…</>
-                      : <><Scale size={16} /> Escalate to Central Agency</>}
+                      ? <><div className="spinner" /> Opening case</>
+                      : <><Scale size={16} strokeWidth={1.5} /> Open a case for review</>}
                   </button>
                 )}
 
                 <button
-                  className="analyze-btn"
+                  className="analyze-btn btn-secondary"
                   onClick={handleDownloadReport}
-                  style={{
-                    width: '100%',
-                    marginTop: 0,
-                    background: '#b91c1c',
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    alignItems: 'center',
-                    fontWeight: 600,
-                    border: 'none',
-                    borderRadius: '4px',
-                    padding: '0.75rem'
-                  }}
+                  style={{ width: '100%', marginTop: 0 }}
                 >
-                  <FileDown size={18} /> Export Forensic Case File (PDF)
+                  <FileDown size={16} strokeWidth={1.5} /> Export case file (PDF)
                 </button>
               </div>
             </div>
           ) : (
             <div className="empty-state">
               <div className="empty-icon" style={{ marginBottom: '0.6rem' }}>
-                <Shield size={36} color="#6366f1" />
+                <Shield size={28} strokeWidth={1.25} color="var(--text-muted)" />
               </div>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem', fontFamily: 'var(--font-serif)' }}>
-                Forensic Investigation Standby
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '1.1rem' }}>
+                No account scored yet
               </h3>
-              <p style={{ maxWidth: '360px', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Paste any public <b>Instagram</b>, <b>X</b>, or <b>Facebook</b> profile link above and click <b>Deep Scan URL</b>, or select sample telemetry on the left to run an assessment.
+              <p style={{ maxWidth: '340px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                Scan a public profile link, or pick a sample account and press Score account. The score, its reasons and the case file appear here.
               </p>
             </div>
           )}
@@ -618,13 +573,13 @@ export default function App() {
         <div style={{
           position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999,
           padding: '0.75rem 1.1rem',
-          background: escalateToast.type === 'success' ? 'rgba(22,163,74,0.95)' : 'rgba(220,38,38,0.95)',
-          color: '#fff', borderRadius: '6px',
-          fontSize: '0.83rem', fontWeight: 600,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+          background: '#1f1b16',
+          color: '#fdfbf7', borderRadius: '10px',
+          fontSize: '0.88rem', fontWeight: 500,
+          boxShadow: '0 8px 24px rgba(31,27,22,0.18)',
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           minWidth: '280px',
-          animation: 'fadeInUp 0.2s ease',
+          animation: 'fadeInUp 0.24s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
           {escalateToast.type === 'success'
             ? <CheckCircle2 size={15} />

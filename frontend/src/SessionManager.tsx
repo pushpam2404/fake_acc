@@ -17,8 +17,8 @@ const PLATFORM_META: Record<Platform, {
 }> = {
   twitter: {
     label: 'X',
-    icon: '𝕏',
-    color: '#1a1a2e',
+    icon: 'X',
+    color: '#1f1b16',
     loginNote: 'Localhost: Opens an interactive X window. Cloud: Paste your auth_token cookie or session JSON below.',
     reliabilityBefore: '~20%',
     reliabilityAfter: '~85%',
@@ -27,8 +27,8 @@ const PLATFORM_META: Record<Platform, {
   },
   instagram: {
     label: 'Instagram',
-    icon: '📸',
-    color: '#833ab4',
+    icon: 'IG',
+    color: '#1f1b16',
     loginNote: 'Localhost: Opens an Instagram window. Cloud: Paste your sessionid cookie or session JSON below.',
     reliabilityBefore: '~15%',
     reliabilityAfter: '~80%',
@@ -37,8 +37,8 @@ const PLATFORM_META: Record<Platform, {
   },
   facebook: {
     label: 'Facebook',
-    icon: '👥',
-    color: '#1877f2',
+    icon: 'FB',
+    color: '#1f1b16',
     loginNote: 'Most public Facebook profiles work without login. Paste cookies for private profile scans.',
     reliabilityBefore: '~30%',
     reliabilityAfter: '~90%',
@@ -92,7 +92,7 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
   return (
     <div style={{
       background: 'var(--bg-card)',
-      border: `1px solid ${isConnected ? 'rgba(34,197,94,0.35)' : 'var(--border-default)'}`,
+      border: `1px solid ${isConnected ? 'rgba(31,122,69,0.35)' : 'var(--border-default)'}`,
       borderRadius: '10px',
       padding: '1.2rem 1.4rem',
       display: 'flex',
@@ -103,8 +103,8 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{meta.icon}</span>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1, display: 'inline-grid', placeItems: 'center', width: 28, height: 28, borderRadius: 6, background: 'var(--bg-card)', color: 'var(--text-secondary)', boxShadow: 'inset 0 0 0 1px var(--border-default)' }}>{meta.icon}</span>
+          <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
             {meta.label}
           </span>
         </div>
@@ -117,15 +117,14 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
           padding: '3px 10px',
           borderRadius: '20px',
           fontSize: '0.72rem',
-          fontWeight: 700,
-          letterSpacing: '0.04em',
-          background: isConnected ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.1)',
-          color: isConnected ? '#22c55e' : 'var(--text-muted)',
-          border: `1px solid ${isConnected ? 'rgba(34,197,94,0.3)' : 'var(--border-default)'}`,
+          fontWeight: 600,
+          background: isConnected ? 'rgba(31,122,69,0.12)' : 'rgba(31,27,22,0.05)',
+          color: isConnected ? '#1f7a45' : 'var(--text-muted)',
+          border: `1px solid ${isConnected ? 'rgba(31,122,69,0.3)' : 'var(--border-default)'}`,
         }}>
           {isConnected
-            ? <><CheckCircle2 size={11} /> CONNECTED</>
-            : <><XCircle size={11} /> NOT CONNECTED</>
+            ? <><CheckCircle2 size={12} /> Connected</>
+            : <><XCircle size={12} /> Not connected</>
           }
         </div>
       </div>
@@ -133,8 +132,8 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
       {/* Session meta */}
       {isConnected && (
         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-          <span>🕐 Connected: {formatDate(info.captured_at)}</span>
-          <span>🍪 Cookies: {info.cookies_count}</span>
+          <span>Connected {formatDate(info.captured_at)}</span>
+          <span className="tnum">{info.cookies_count} cookies</span>
         </div>
       )}
 
@@ -148,8 +147,8 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
         display: 'flex',
         gap: '1.5rem',
       }}>
-        <span>Before: <b style={{ color: '#f87171' }}>{meta.reliabilityBefore}</b></span>
-        <span>After connecting: <b style={{ color: '#4ade80' }}>{meta.reliabilityAfter}</b></span>
+        <span>Before: <b style={{ color: 'var(--color-fake)' }}>{meta.reliabilityBefore}</b></span>
+        <span>After connecting: <b style={{ color: 'var(--color-real)' }}>{meta.reliabilityAfter}</b></span>
       </div>
 
       {/* Login hint */}
@@ -172,9 +171,9 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
             borderRadius: '6px',
             border: 'none',
             background: isConnected
-              ? 'rgba(59,130,246,0.15)'
-              : 'linear-gradient(135deg, #3b82f6, #6366f1)',
-            color: isConnected ? '#60a5fa' : 'white',
+              ? 'var(--bg-card)'
+              : '#1f1b16',
+            color: isConnected ? 'var(--text-primary)' : 'white',
             fontWeight: 600,
             fontSize: '0.8rem',
             cursor: isBusy ? 'not-allowed' : 'pointer',
@@ -200,8 +199,8 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
             padding: '0.5rem 0.8rem',
             borderRadius: '6px',
             border: '1px solid var(--border-default)',
-            background: showImport ? 'rgba(99,102,241,0.15)' : 'var(--bg-input)',
-            color: showImport ? '#818cf8' : 'var(--text-secondary)',
+            background: showImport ? 'rgba(94,85,74,0.15)' : 'var(--bg-input)',
+            color: showImport ? '#5e554a' : 'var(--text-secondary)',
             fontWeight: 600,
             fontSize: '0.8rem',
             cursor: 'pointer',
@@ -211,7 +210,7 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
           }}
         >
           <KeyRound size={13} />
-          {showImport ? 'Close' : 'Paste Token / Cookies'}
+          {showImport ? 'Close' : 'Paste token or cookies'}
         </button>
 
         {isConnected && (
@@ -221,9 +220,9 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
             style={{
               padding: '0.5rem 0.8rem',
               borderRadius: '6px',
-              border: '1px solid rgba(239,68,68,0.3)',
-              background: 'rgba(239,68,68,0.08)',
-              color: '#f87171',
+              border: '1px solid rgba(180,35,42,0.3)',
+              background: 'rgba(180,35,42,0.08)',
+              color: 'var(--color-fake)',
               fontWeight: 600,
               fontSize: '0.8rem',
               cursor: isBusy ? 'not-allowed' : 'pointer',
@@ -244,7 +243,7 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
           padding: '0.8rem',
           background: 'var(--bg-input)',
           borderRadius: '6px',
-          border: '1px dashed rgba(99,102,241,0.4)',
+          border: '1px dashed rgba(94,85,74,0.4)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.5rem',
@@ -276,7 +275,7 @@ function PlatformCard({ platform, info, onConnect, onRevoke, onImport, isCapturi
                 padding: '0.45rem 0.9rem',
                 borderRadius: '4px',
                 border: 'none',
-                background: '#4f46e5',
+                background: '#1f1b16',
                 color: 'white',
                 fontWeight: 600,
                 fontSize: '0.78rem',
@@ -331,7 +330,7 @@ export function SessionManager({ onSessionChange }: SessionManagerProps) {
 
   const handleConnect = async (platform: Platform) => {
     setCapturingPlatform(platform);
-    setMessage({ type: 'info', text: `Opening Chromium window for ${PLATFORM_META[platform].label}... Log in normally. This window will close automatically.` });
+    setMessage({ type: 'info', text: `Opening Chromium window for ${PLATFORM_META[platform].label}. Sign in as usual, the window closes by itself.` });
     try {
       const res = await captureSession(platform);
       setMessage({ type: 'success', text: res.message });
@@ -377,13 +376,13 @@ export function SessionManager({ onSessionChange }: SessionManagerProps) {
       {/* Header */}
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
-          <Shield size={20} color="#6366f1" />
-          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            Platform Session Manager
+          <Shield size={20} color="#5e554a" />
+          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            Platform sessions
           </h2>
         </div>
         <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-          Connect your social accounts once to dramatically improve scan accuracy.
+          Connecting an account lets the URL scan read profiles that need a login.
           Sessions are stored locally as browser cookies — <b>your password is never saved</b>.
           Reconnect every ~30 days when sessions expire.
         </p>
@@ -400,19 +399,19 @@ export function SessionManager({ onSessionChange }: SessionManagerProps) {
           alignItems: 'flex-start',
           gap: '0.5rem',
           background: message.type === 'success'
-            ? 'rgba(34,197,94,0.1)'
+            ? 'rgba(31,122,69,0.1)'
             : message.type === 'error'
-              ? 'rgba(239,68,68,0.1)'
-              : 'rgba(99,102,241,0.1)',
+              ? 'rgba(180,35,42,0.1)'
+              : 'rgba(94,85,74,0.1)',
           border: `1px solid ${message.type === 'success'
-            ? 'rgba(34,197,94,0.3)'
+            ? 'rgba(31,122,69,0.3)'
             : message.type === 'error'
-              ? 'rgba(239,68,68,0.3)'
-              : 'rgba(99,102,241,0.3)'}`,
+              ? 'rgba(180,35,42,0.3)'
+              : 'rgba(94,85,74,0.3)'}`,
           color: message.type === 'success'
-            ? '#4ade80'
+            ? '#5fbf8a'
             : message.type === 'error'
-              ? '#f87171'
+              ? '#e5686d'
               : '#a5b4fc',
         }}>
           {message.type === 'success' && <CheckCircle2 size={15} style={{ flexShrink: 0, marginTop: '1px' }} />}

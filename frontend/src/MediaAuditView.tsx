@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, AlertTriangle, Link as LinkIcon, Sparkles, Layers, Image as ImageIcon, CheckCircle, ExternalLink } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Link as LinkIcon, Layers, Image as ImageIcon, CheckCircle, ExternalLink } from 'lucide-react';
 import { ContentAnalysis, PostMediaItem } from './types';
 
 interface MediaAuditViewProps {
@@ -26,12 +26,12 @@ export function MediaAuditView({
   const threatLevel = contentAnalysis?.phishing_threat_level || 'LOW';
   const threatBadgeColor =
     threatLevel === 'CRITICAL'
-      ? '#dc2626'
+      ? '#b4232a'
       : threatLevel === 'ELEVATED'
       ? '#ea580c'
       : threatLevel === 'MODERATE'
-      ? '#d97706'
-      : '#16a34a';
+      ? '#9a5b06'
+      : '#1f7a45';
 
   const simScore = contentAnalysis?.caption_similarity?.similarity_score || 0;
   const isRepetitive = contentAnalysis?.caption_similarity?.is_repetitive || false;
@@ -60,19 +60,17 @@ export function MediaAuditView({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, minWidth: 0 }}>
-          <Sparkles size={17} color="#9333ea" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <Layers size={16} strokeWidth={1.5} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '2px' }} />
           <h4
             style={{
               margin: 0,
               fontSize: '0.88rem',
               color: 'var(--text-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              fontWeight: 700,
+              fontWeight: 600,
               lineHeight: 1.35,
             }}
           >
-            Multimodal Media & Content Forensic Audit
+            Posts, links and images
           </h4>
         </div>
 
@@ -88,7 +86,7 @@ export function MediaAuditView({
               border: `1px solid ${threatBadgeColor}40`,
               color: threatBadgeColor,
               fontSize: '0.75rem',
-              fontWeight: 700,
+              fontWeight: 600,
               whiteSpace: 'nowrap',
               flexShrink: 0,
             }}
@@ -105,7 +103,7 @@ export function MediaAuditView({
           display: 'flex',
           gap: '1rem',
           alignItems: 'flex-start',
-          background: 'rgba(15, 23, 42, 0.02)',
+          background: 'rgba(31,27,22, 0.02)',
           border: '1px solid var(--border-default)',
           borderRadius: '6px',
           padding: '0.85rem',
@@ -134,20 +132,20 @@ export function MediaAuditView({
               width: '52px',
               height: '52px',
               borderRadius: '50%',
-              background: '#e2e8f0',
+              background: '#e9e3d8',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            <ImageIcon size={24} color="#64748b" />
+            <ImageIcon size={24} color="#6f675c" />
           </div>
         )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '4px' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               @{username || 'target_profile'}
             </span>
           </div>
@@ -158,14 +156,14 @@ export function MediaAuditView({
 
           {externalUrl && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '6px', fontSize: '0.75rem' }}>
-              <LinkIcon size={12} color="#64748b" />
+              <LinkIcon size={12} color="#6f675c" />
               <span style={{ color: 'var(--text-secondary)' }}>Outbound:</span>
               <a
                 href={externalUrl}
                 target="_blank"
                 rel="noreferrer"
                 style={{
-                  color: contentAnalysis?.outbound_link_audit?.risk_level === 'HIGH' ? '#dc2626' : '#2563eb',
+                  color: contentAnalysis?.outbound_link_audit?.risk_level === 'HIGH' ? '#b4232a' : '#9a4a08',
                   textDecoration: 'underline',
                   fontWeight: 600,
                   display: 'flex',
@@ -177,7 +175,7 @@ export function MediaAuditView({
               </a>
               {contentAnalysis?.outbound_link_audit?.risk_level === 'HIGH' && (
                 <span style={{ background: '#fee2e2', color: '#b91c1c', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>
-                  ⚠️ High-Risk Shortener
+                  High-risk link shortener
                 </span>
               )}
             </div>
@@ -194,7 +192,7 @@ export function MediaAuditView({
               border: '1px solid var(--border-default)',
               borderRadius: '6px',
               padding: '0.75rem',
-              background: 'rgba(15, 23, 42, 0.02)',
+              background: 'rgba(31,27,22, 0.02)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '6px' }}>
@@ -205,8 +203,8 @@ export function MediaAuditView({
                 className="mono"
                 style={{
                   fontSize: '0.82rem',
-                  fontWeight: 700,
-                  color: isRepetitive ? '#dc2626' : '#16a34a',
+                  fontWeight: 600,
+                  color: isRepetitive ? '#b4232a' : '#1f7a45',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                 }}
@@ -215,12 +213,12 @@ export function MediaAuditView({
               </span>
             </div>
 
-            <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '6px', background: '#e9e3d8', borderRadius: '3px', overflow: 'hidden' }}>
               <div
                 style={{
                   width: `${Math.min(100, simScore)}%`,
                   height: '100%',
-                  background: isRepetitive ? 'linear-gradient(90deg, #f59e0b, #dc2626)' : '#16a34a',
+                  background: isRepetitive ? '#b4232a' : '#1f7a45',
                   transition: 'width 0.5s ease',
                 }}
               />
@@ -237,7 +235,7 @@ export function MediaAuditView({
               border: '1px solid var(--border-default)',
               borderRadius: '6px',
               padding: '0.75rem',
-              background: 'rgba(15, 23, 42, 0.02)',
+              background: 'rgba(31,27,22, 0.02)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '6px' }}>
@@ -248,7 +246,7 @@ export function MediaAuditView({
                 className="mono"
                 style={{
                   fontSize: '0.82rem',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: threatBadgeColor,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
@@ -258,7 +256,7 @@ export function MediaAuditView({
               </span>
             </div>
 
-            <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '6px', background: '#e9e3d8', borderRadius: '3px', overflow: 'hidden' }}>
               <div
                 style={{
                   width: `${Math.min(100, contentAnalysis.content_risk_score)}%`,
@@ -279,7 +277,7 @@ export function MediaAuditView({
       {/* PHISHING & FRAUD FINDINGS LIST */}
       {contentAnalysis && contentAnalysis.phishing_indicators.length > 0 && (
         <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#b4232a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <AlertTriangle size={14} /> Active Phishing & Semantic Anomaly Triggers ({contentAnalysis.phishing_indicators.length})
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -307,7 +305,7 @@ export function MediaAuditView({
       {posts && posts.length > 0 && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <Layers size={14} /> Extracted Post Media Gallery ({posts.length} Posts)
             </div>
           </div>
@@ -331,7 +329,7 @@ export function MediaAuditView({
                   flexDirection: 'column',
                 }}
               >
-                <div style={{ position: 'relative', width: '100%', height: '110px', background: '#0f172a' }}>
+                <div style={{ position: 'relative', width: '100%', height: '110px', background: '#1f1b16' }}>
                   <img
                     src={post.thumbnail_url}
                     alt={`Post ${idx + 1}`}
@@ -350,8 +348,8 @@ export function MediaAuditView({
                       position: 'absolute',
                       bottom: '4px',
                       left: '4px',
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      color: '#f8fafc',
+                      background: 'rgba(31,27,22, 0.8)',
+                      color: '#fdfbf7',
                       fontSize: '0.65rem',
                       padding: '1px 5px',
                       borderRadius: '3px',

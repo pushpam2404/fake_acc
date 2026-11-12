@@ -324,10 +324,10 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
   };
 
   const getNodeColor = (risk: number, type: string) => {
-    if (type === 'target') return '#8b5cf6'; // Violet for target subject
-    if (risk > 70) return '#ef4444'; // Crimson Red for confirmed bots
-    if (risk >= 30) return '#f59e0b'; // Amber for suspicious nodes
-    return '#10b981'; // Emerald Green for genuine humans
+    if (type === 'target') return '#6f675c'; // Violet for target subject
+    if (risk > 70) return '#b4232a'; // Crimson Red for confirmed bots
+    if (risk >= 30) return '#9a5b06'; // Amber for suspicious nodes
+    return '#1f7a45'; // Emerald Green for genuine humans
   };
 
   const getEdgeThreatLevel = (edge: Edge) => {
@@ -365,15 +365,13 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Cpu size={16} color="#8b5cf6" />
+          <Cpu size={16} color="#6f675c" />
           <h4
             style={{
               margin: 0,
               fontSize: '0.85rem',
               color: 'var(--text-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Coordinated Threat Network Topology
@@ -388,7 +386,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
               gap: '0.5rem',
               fontSize: '0.72rem',
               color: 'var(--text-secondary)',
-              background: 'rgba(15, 23, 42, 0.04)',
+              background: 'rgba(31,27,22, 0.04)',
               padding: '3px 8px',
               borderRadius: '4px',
               border: '1px solid var(--border-default)',
@@ -421,7 +419,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
               }}
               title="Auto-arrange network layout"
             >
-              <Play size={10} color="#8b5cf6" /> Auto-Arrange
+              <Play size={10} color="#6f675c" /> Auto-Arrange
             </button>
             <button
               onClick={() => setZoom((z) => Math.min(1.8, z + 0.15))}
@@ -432,7 +430,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                 padding: '3px 6px',
                 cursor: 'pointer',
               }}
-              title="Zoom In"
+              title="Zoom in"
             >
               <ZoomIn size={12} />
             </button>
@@ -445,7 +443,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                 padding: '3px 6px',
                 cursor: 'pointer',
               }}
-              title="Zoom Out"
+              title="Zoom out"
             >
               <ZoomOut size={12} />
             </button>
@@ -458,7 +456,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                 padding: '3px 6px',
                 cursor: 'pointer',
               }}
-              title="Reset Layout & Centering"
+              title="Reset layout"
             >
               <RotateCcw size={12} />
             </button>
@@ -472,10 +470,10 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
           position: 'relative',
           width: '100%',
           height: `${height}px`,
-          background: 'radial-gradient(ellipse at center, #0f172a 0%, #080d1a 100%)',
+          background: 'radial-gradient(ellipse at center, #1f1b16 0%, #080d1a 100%)',
           borderRadius: '8px',
           overflow: 'hidden',
-          border: '1px solid #1e293b',
+          border: '1px solid #2b2620',
           cursor: isPanning ? 'grabbing' : 'grab',
           userSelect: 'none',
           touchAction: 'none',
@@ -497,9 +495,9 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
         >
           <defs>
             <radialGradient id="radarGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.12" />
-              <stop offset="60%" stopColor="#6366f1" stopOpacity="0.04" />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+              <stop offset="0%" stopColor="#6f675c" stopOpacity="0.12" />
+              <stop offset="60%" stopColor="#5e554a" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#6f675c" stopOpacity="0" />
             </radialGradient>
 
             <filter id="threatGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -520,14 +518,14 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
           </defs>
 
           {/* Radar Circles */}
-          <circle cx={centerX} cy={centerY} r={75} fill="none" stroke="#1e293b" strokeWidth="1" strokeDasharray="3 3" />
-          <circle cx={centerX} cy={centerY} r={155} fill="none" stroke="#1e293b" strokeWidth="1" strokeDasharray="4 4" />
-          <circle cx={centerX} cy={centerY} r={230} fill="none" stroke="#0f172a" strokeWidth="1" />
+          <circle cx={centerX} cy={centerY} r={75} fill="none" stroke="#2b2620" strokeWidth="1" strokeDasharray="3 3" />
+          <circle cx={centerX} cy={centerY} r={155} fill="none" stroke="#2b2620" strokeWidth="1" strokeDasharray="4 4" />
+          <circle cx={centerX} cy={centerY} r={230} fill="none" stroke="#1f1b16" strokeWidth="1" />
           <circle cx={centerX} cy={centerY} r={155} fill="url(#radarGlow)" />
 
           {/* Crosshair Center Lines */}
-          <line x1={centerX - 260} y1={centerY} x2={centerX + 260} y2={centerY} stroke="#1e293b" strokeWidth="0.8" opacity="0.3" />
-          <line x1={centerX} y1={centerY - 190} x2={centerX} y2={centerY + 190} stroke="#1e293b" strokeWidth="0.8" opacity="0.3" />
+          <line x1={centerX - 260} y1={centerY} x2={centerX + 260} y2={centerY} stroke="#2b2620" strokeWidth="0.8" opacity="0.3" />
+          <line x1={centerX} y1={centerY - 190} x2={centerX} y2={centerY + 190} stroke="#2b2620" strokeWidth="0.8" opacity="0.3" />
 
           {/* Render Graph Edges */}
           {data.edges.map((edge, idx) => {
@@ -545,13 +543,13 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
             const isCIB = threatLevel === 'CRITICAL';
             const isOrganic = threatLevel === 'ORGANIC';
 
-            let strokeColor = '#334155';
+            let strokeColor = '#3d362e';
             if (isHovered) {
-              strokeColor = isOrganic ? '#34d399' : isCIB ? '#f43f5e' : '#fbbf24';
+              strokeColor = isOrganic ? '#5fbf8a' : isCIB ? '#f43f5e' : '#e0a640';
             } else if (isHighlighted) {
-              strokeColor = isOrganic ? '#10b981' : isCIB ? '#ef4444' : '#f59e0b';
+              strokeColor = isOrganic ? '#1f7a45' : isCIB ? '#b4232a' : '#9a5b06';
             } else if (isCIB) {
-              strokeColor = 'rgba(239, 68, 68, 0.45)';
+              strokeColor = 'rgba(180,35,42, 0.45)';
             } else if (isOrganic) {
               strokeColor = 'rgba(52, 211, 153, 0.25)';
             }
@@ -599,7 +597,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                     cy={node.y}
                     r={radius + 9}
                     fill="none"
-                    stroke="#8b5cf6"
+                    stroke="#6f675c"
                     strokeWidth="1.5"
                     opacity="0.5"
                     strokeDasharray="4 3"
@@ -614,7 +612,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                     cy={node.y}
                     r={radius + 6}
                     fill="none"
-                    stroke="#ef4444"
+                    stroke="#b4232a"
                     strokeWidth="1.2"
                     opacity="0.6"
                   />
@@ -626,7 +624,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                   cy={node.y}
                   r={radius}
                   fill={color}
-                  stroke={isSelected ? '#ffffff' : isHovered ? '#f8fafc' : '#0f172a'}
+                  stroke={isSelected ? '#ffffff' : isHovered ? '#fdfbf7' : '#1f1b16'}
                   strokeWidth={isSelected ? 3 : isHovered ? 2.5 : 2}
                   filter={isTarget ? 'url(#targetAura)' : isHighRisk ? 'url(#threatGlow)' : undefined}
                 />
@@ -638,8 +636,8 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                   width={node.label.length * 6.6 + 18}
                   height={16}
                   rx={4}
-                  fill="rgba(15, 23, 42, 0.9)"
-                  stroke={isTarget ? '#8b5cf6' : isHighRisk ? '#ef4444' : '#334155'}
+                  fill="rgba(31,27,22, 0.9)"
+                  stroke={isTarget ? '#6f675c' : isHighRisk ? '#b4232a' : '#3d362e'}
                   strokeWidth={isTarget || isSelected ? '1' : '0.7'}
                 />
 
@@ -648,7 +646,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                   x={node.x}
                   y={node.y + radius + 16}
                   textAnchor="middle"
-                  fill="#f8fafc"
+                  fill="#fdfbf7"
                   fontSize="8.5px"
                   fontFamily="ui-monospace, monospace"
                   fontWeight={isTarget ? '700' : '500'}
@@ -668,8 +666,8 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
             const isOrganic = level === 'ORGANIC';
             const isCritical = level === 'CRITICAL';
 
-            const border = isOrganic ? '1px solid #10b981' : isCritical ? '1px solid #ef4444' : '1px solid #f59e0b';
-            const badgeBg = isOrganic ? 'rgba(16, 185, 129, 0.25)' : isCritical ? 'rgba(239, 68, 68, 0.25)' : 'rgba(245, 158, 11, 0.25)';
+            const border = isOrganic ? '1px solid #1f7a45' : isCritical ? '1px solid #b4232a' : '1px solid #9a5b06';
+            const badgeBg = isOrganic ? 'rgba(31,122,69, 0.25)' : isCritical ? 'rgba(180,35,42, 0.25)' : 'rgba(154,91,6, 0.25)';
             const badgeColor = isOrganic ? '#86efac' : isCritical ? '#fca5a5' : '#fde68a';
 
             return (
@@ -678,12 +676,12 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                   position: 'absolute',
                   top: '12px',
                   left: '12px',
-                  background: 'rgba(15, 23, 42, 0.95)',
+                  background: 'rgba(31,27,22, 0.95)',
                   border: border,
                   borderRadius: '6px',
                   padding: '8px 12px',
                   fontSize: '0.75rem',
-                  color: '#f8fafc',
+                  color: '#fdfbf7',
                   boxShadow: '0 6px 16px rgba(0,0,0,0.6)',
                   pointerEvents: 'none',
                   maxWidth: '320px',
@@ -692,8 +690,8 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    {isOrganic ? <CheckCircle2 size={13} color="#34d399" /> : <ShieldAlert size={13} color="#f87171" />}
-                    <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>
+                    {isOrganic ? <CheckCircle2 size={13} color="#5fbf8a" /> : <ShieldAlert size={13} color="#e5686d" />}
+                    <span style={{ fontWeight: 600, fontSize: '0.8rem' }}>
                       @{hoveredEdge.source} ⟷ @{hoveredEdge.target}
                     </span>
                   </div>
@@ -704,14 +702,14 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                       borderRadius: '3px',
                       background: badgeBg,
                       color: badgeColor,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       whiteSpace: 'nowrap',
                     }}
                   >
                     {level}
                   </span>
                 </div>
-                <div style={{ color: '#cbd5e1', fontSize: '0.72rem', marginTop: '2px', lineHeight: 1.35 }}>
+                <div style={{ color: '#d6cfc2', fontSize: '0.72rem', marginTop: '2px', lineHeight: 1.35 }}>
                   Relation: <span style={{ color: '#ffffff', fontWeight: 600 }}>{hoveredEdge.reason}</span>
                 </div>
               </div>
@@ -733,12 +731,12 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                   position: 'absolute',
                   top: '12px',
                   left: '12px',
-                  background: 'rgba(15, 23, 42, 0.95)',
+                  background: 'rgba(31,27,22, 0.95)',
                   border: `1px solid ${getNodeColor(n.risk_score, n.type)}`,
                   borderRadius: '6px',
                   padding: '8px 12px',
                   fontSize: '0.75rem',
-                  color: '#f8fafc',
+                  color: '#fdfbf7',
                   boxShadow: '0 6px 16px rgba(0,0,0,0.6)',
                   pointerEvents: 'none',
                   minWidth: '220px',
@@ -752,19 +750,19 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
                       fontSize: '0.65rem',
                       padding: '1px 6px',
                       borderRadius: '3px',
-                      background: isHigh ? 'rgba(239, 68, 68, 0.25)' : isMed ? 'rgba(245, 158, 11, 0.25)' : 'rgba(16, 185, 129, 0.25)',
+                      background: isHigh ? 'rgba(180,35,42, 0.25)' : isMed ? 'rgba(154,91,6, 0.25)' : 'rgba(31,122,69, 0.25)',
                       color: isHigh ? '#fca5a5' : isMed ? '#fde68a' : '#86efac',
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     {n.type.toUpperCase()}
                   </span>
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
-                  Role: <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{n.role || 'Network Node'}</span>
+                <div style={{ color: '#8a847a', fontSize: '0.7rem' }}>
+                  Role: <span style={{ color: '#e9e3d8', fontWeight: 500 }}>{n.role || 'Account'}</span>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '4px', fontSize: '0.7rem', color: '#cbd5e1' }}>
-                  <div>Risk: <b style={{ color: isHigh ? '#f87171' : isMed ? '#fbbf24' : '#34d399' }}>{n.risk_score}%</b></div>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '4px', fontSize: '0.7rem', color: '#d6cfc2' }}>
+                  <div>Risk: <b style={{ color: isHigh ? '#e5686d' : isMed ? '#e0a640' : '#5fbf8a' }}>{n.risk_score}%</b></div>
                   <div>Centrality: <b className="mono">{n.centrality}</b></div>
                 </div>
               </div>
@@ -779,7 +777,7 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
             bottom: '8px',
             right: '10px',
             fontSize: '0.65rem',
-            color: '#64748b',
+            color: '#6f675c',
             pointerEvents: 'none',
             display: 'flex',
             alignItems: 'center',
@@ -803,20 +801,20 @@ export function NetworkGraph({ data }: NetworkGraphProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#8b5cf6' }} />
-          <span>Investigated Subject</span>
+          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#6f675c' }} />
+          <span>Account under review</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#ef4444' }} />
-          <span>Coordinated Bot / Puppet</span>
+          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#b4232a' }} />
+          <span>Likely bot or sock puppet</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#f59e0b' }} />
-          <span>Suspicious Cluster</span>
+          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#9a5b06' }} />
+          <span>Suspicious cluster</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#10b981' }} />
-          <span>Organic Human Peer</span>
+          <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#1f7a45' }} />
+          <span>Likely real account</span>
         </div>
       </div>
     </div>
